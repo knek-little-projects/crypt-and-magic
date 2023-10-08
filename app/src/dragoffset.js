@@ -1,4 +1,7 @@
-function useDragOffset({
+import React, { useEffect, useRef, useState } from 'react';
+
+
+export default function useDragOffset({
     mouseButton = 1,
     onOffsetChange = () => { },
 }) {
