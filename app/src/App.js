@@ -73,13 +73,14 @@ export default function App() {
         }
     }
 
-    
+    const [brush, setBrush] = useState({ id: "grass", size: 1 })
+
     if (hoverAbsCell !== null) {
         let { x, y } = grid.getOffsetedScreenCellPointByAbsCell(hoverAbsCell)
         let cellWidth = cellSize
         let cellHeight = cellSize
-        
-        const hoverSize = 1
+
+        const hoverSize = brush.size
         if (hoverSize > 1) {
             cellWidth = hoverSize * cellSize
             cellHeight = hoverSize * cellSize
@@ -87,7 +88,7 @@ export default function App() {
             x -= offset * cellSize
             y -= offset * cellSize
         }
-        
+
         cells.push(
             <div
                 key="cell_hover"
@@ -115,10 +116,10 @@ export default function App() {
     return (
         <div className='MapEditor'>
             <div className='brush-buttons'>
-                <MapEditorBrushButton src="/map/erasor.png">
+                <MapEditorBrushButton src="/map/erasor.png" onClick={() => setBrush({ id: "grass", size: 1 })}>
                     Erase 1x1
                 </MapEditorBrushButton>
-                <MapEditorBrushButton src="/map/erasor.png">
+                <MapEditorBrushButton src="/map/erasor.png" onClick={() => setBrush({ id: "grass", size: 3 })}>
                     Erase 3x3
                 </MapEditorBrushButton>
                 {buttons}
