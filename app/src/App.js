@@ -6,12 +6,39 @@ import useDragOffset from "./dragoffset"
 import "./App.scss"
 
 
+function useMapObjects() {
+    return {
+        objects: [
+            {
+                name: "grass",
+                id: "grass",
+                src: "/map/grass.png"
+            },
+            {
+                name: "water",
+                id: "water",
+                src: "/map/water.png"
+            }
+        ]
+    }
+}
+
+
+function MapEditorBrushButton({ src, onClick, children }) {
+    return (
+        <button onClick={onClick}>
+            <img width={25} height={25} src={src} />
+            {children}
+        </button>
+    )
+}
+
+
 export default function App() {
     const cellSize = 50
     const width = 500
     const height = 500
     const displayIJ = true
-
     const mapSize = 10
 
     const { offset, dragHandlers } = useDragOffset({ mouseButton: 2 })
@@ -46,22 +73,41 @@ export default function App() {
         }
     }
 
+    const { objects } = useMapObjects()
+    const buttons = objects.map(o => (
+        <MapEditorBrushButton src={o.src} key={o.id}>
+            {o.name}
+        </MapEditorBrushButton>
+    ))
+
     return (
-        <div className="map">
-            <div
-                ref={ref}
-                className='cell-wrapper'
-                style={{
-                    width: width + 'px',
-                    height: height + 'px',
-                }}
-                onContextMenu={e => e.preventDefault()}
-                onMouseDown={e => dragHandlers.onMouseDown(e)}
-                onMouseUp={e => dragHandlers.onMouseUp(e)}
-                onMouseMove={e => dragHandlers.onMouseMove(e) + onGridHover(e)}
-                onMouseLeave={e => onGridLeave(e)}
-            >
-                {cells}
+        <div className='MapEditor'>
+            <div className='brush-buttons'>
+                <MapEditorBrushButton src="/map/erasor.png">
+                    Erase 1x1
+                </MapEditorBrushButton>
+                <MapEditorBrushButton src="/map/erasor.png">
+                    Erase 3x3
+                </MapEditorBrushButton>
+                {buttons}
+            </div>
+            <hr />
+            <div className="map">
+                <div
+                    ref={ref}
+                    className='cell-wrapper'
+                    style={{
+                        width: width + 'px',
+                        height: height + 'px',
+                    }}
+                    onContextMenu={e => e.preventDefault()}
+                    onMouseDown={e => dragHandlers.onMouseDown(e)}
+                    onMouseUp={e => dragHandlers.onMouseUp(e)}
+                    onMouseMove={e => dragHandlers.onMouseMove(e) + onGridHover(e)}
+                    onMouseLeave={e => onGridLeave(e)}
+                >
+                    {cells}
+                </div>
             </div>
         </div>
     );
