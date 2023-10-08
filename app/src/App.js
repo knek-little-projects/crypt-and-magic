@@ -7,19 +7,24 @@ import "./App.scss"
 
 
 function useMapObjects() {
+    const objects = [
+        {
+            name: "grass",
+            id: "grass",
+            src: "/map/grass.png"
+        },
+        {
+            name: "water",
+            id: "water",
+            src: "/map/water.png"
+        }
+    ]
+    function getImageUrlById(id) {
+        return objects.find(o => o.id === id).src
+    }
     return {
-        objects: [
-            {
-                name: "grass",
-                id: "grass",
-                src: "/map/grass.png"
-            },
-            {
-                name: "water",
-                id: "water",
-                src: "/map/water.png"
-            }
-        ]
+        objects,
+        getImageUrlById,
     }
 }
 
@@ -31,6 +36,33 @@ function MapEditorBrushButton({ src, onClick, children }) {
             {children}
         </button>
     )
+}
+
+function useMatrix({ defaultValue }) {
+    const [dict, setDict] = useState({})
+
+    function key({ i, j }) {
+        return i + " " + j
+    }
+
+    function getItem(cell) {
+        return dict[key(cell)] || defaultValue
+    }
+
+    function setItems(cells, value) {
+        const newObject = {}
+        for (const c of cells) {
+            newObject[key(c)] = value
+        }
+        setDict({
+            ...dict,
+            ...newObject,
+        })
+    }
+    return {
+        getItem,
+        setItems,
+    }
 }
 
 
@@ -47,12 +79,16 @@ export default function App() {
     const ref = useRef()
     const { hoverAbsCell, onGridHover, onGridLeave } = useGridHover(grid, ref)
 
+    const background = useMatrix({defaultValue: "grass"})
     const cells = []
+
+    const { objects, getImageUrlById } = useMapObjects()
 
     for (let i = -1; i < width / cellSize; i++) {
         for (let j = -1; j < height / cellSize; j++) {
             const absCell = grid.mod(grid.getAbsCellByScreenCell({ i, j }), mapSize)
             const { x, y } = grid.getOffsetedScreenCellPointByScreenCell({ i, j })
+            const backgroundId = background.getItem(absCell)
             cells.push(
                 <div
                     key={`cell_${i}_${j}`}
@@ -62,11 +98,11 @@ export default function App() {
                         top: y + 'px',
                         width: cellSize + 'px',
                         height: cellSize + 'px',
-                        backgroundImage: "url('/map/grass.png')",
+                        backgroundImage: "url('" + getImageUrlById(backgroundId) + "')",
                     }}
                 >
                     {displayIJ &&
-                        <div className='debug coordinates'>{absCell.i},{absCell.j}</div>
+                        <div className='debug coordinates'>{absCell.i},{absCell.j},{backgroundId}</div>
                     }
                 </div>
             )
@@ -106,12 +142,33 @@ export default function App() {
         )
     }
 
-    const { objects } = useMapObjects()
     const buttons = objects.map(o => (
-        <MapEditorBrushButton src={o.src} key={o.id}>
+        <MapEditorBrushButton src={o.src} key={o.id} onClick={() => setBrush({ id: o.id, size: 1 })}>
             {o.name}
         </MapEditorBrushButton>
     ))
+
+
+    function setBackgroundAtEvent(e) {
+        if (brush === null) {
+            return
+        }
+        const center = grid.getAbsCellByEvent(e, ref.current)
+        const size = brush.size || 1
+
+        const cells = []
+        for (let i = center.i - Math.floor(size / 2); i <= center.i + Math.floor(size / 2); i++) {
+            for (let j = center.j - Math.floor(size / 2); j <= center.j + Math.floor(size / 2); j++) {
+                cells.push({ i, j })
+            }
+        }
+
+        background.setItems(cells, brush.id)
+    }
+    const { dragHandlers: brushHandlers } = useDragOffset({
+        mouseButton: 0,
+        onOffsetChange: e => setBackgroundAtEvent(e)
+    })
 
     return (
         <div className='MapEditor'>
@@ -134,9 +191,9 @@ export default function App() {
                         height: height + 'px',
                     }}
                     onContextMenu={e => e.preventDefault()}
-                    onMouseDown={e => dragHandlers.onMouseDown(e)}
-                    onMouseUp={e => dragHandlers.onMouseUp(e)}
-                    onMouseMove={e => dragHandlers.onMouseMove(e) + onGridHover(e)}
+                    onMouseDown={e => dragHandlers.onMouseDown(e) + brushHandlers.onMouseDown(e) + (e.button === 0 && setBackgroundAtEvent(e))}
+                    onMouseUp={e => dragHandlers.onMouseUp(e) + brushHandlers.onMouseUp(e)}
+                    onMouseMove={e => dragHandlers.onMouseMove(e) + brushHandlers.onMouseMove(e) + onGridHover(e)}
                     onMouseLeave={e => onGridLeave(e)}
                 >
                     {cells}
