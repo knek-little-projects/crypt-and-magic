@@ -149,6 +149,7 @@ export default function App() {
                 <img draggable={false} />
             </div>
         )
+
     }
 
     const buttons = objects.map(o => (
@@ -178,6 +179,37 @@ export default function App() {
         mouseButton: 0,
         onOffsetChange: e => setBackgroundAtEvent(e)
     })
+
+    // const players = [
+    //     {
+    //         cell: {
+    //             i: 0,
+    //             j: 0,
+    //         },
+    //         image: {
+    //             id: "wizard",
+    //         }
+    //     }
+    // ]
+
+    // players.forEach(p => {
+    //     const { x, y } = grid.getOffsetedScreenCellPointByAbsCell(grid.mod(p.cell, mapSize))
+    //     cells.push(
+    //         <div
+    //             className='cell'
+    //             style={{
+    //                 left: x + 'px',
+    //                 top: y + 'px',
+    //                 width: cellSize + 'px',
+    //                 height: cellSize + 'px',
+    //             }}
+    //         >
+    //             <img draggable={false} src={getImageUrlById(p.image.id)} />
+    //         </div>
+    //     )
+    // })
+
+    // const isPlaying = true
 
     return (
         <div className='MapEditor'>
