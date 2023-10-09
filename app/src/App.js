@@ -11,12 +11,17 @@ function useMapObjects() {
         {
             name: "grass",
             id: "grass",
-            src: "/map/grass.png"
+            src: "/map/grass.png",
         },
         {
             name: "water",
             id: "water",
-            src: "/map/water.png"
+            src: "/map/water.png",
+        },
+        {
+            name: "wizard",
+            id: "wizard",
+            src: "/map/wizard.png",
         }
     ]
     function getImageUrlById(id) {
@@ -79,7 +84,7 @@ export default function App() {
     const ref = useRef()
     const { hoverAbsCell, onGridHover, onGridLeave } = useGridHover(grid, ref)
 
-    const background = useMatrix({defaultValue: "grass"})
+    const background = useMatrix({ defaultValue: "grass" })
     const cells = []
 
     const { objects, getImageUrlById } = useMapObjects()
@@ -101,8 +106,12 @@ export default function App() {
                         backgroundImage: "url('" + getImageUrlById(backgroundId) + "')",
                     }}
                 >
-                    {displayIJ &&
-                        <div className='debug coordinates'>{absCell.i},{absCell.j},{backgroundId}</div>
+                    {
+                        displayIJ
+                        &&
+                        <div className='debug coordinates'>
+                            {absCell.i},{absCell.j},{backgroundId}
+                        </div>
                     }
                 </div>
             )
@@ -159,7 +168,7 @@ export default function App() {
         const cells = []
         for (let i = center.i - Math.floor(size / 2); i <= center.i + Math.floor(size / 2); i++) {
             for (let j = center.j - Math.floor(size / 2); j <= center.j + Math.floor(size / 2); j++) {
-                cells.push({ i, j })
+                cells.push(grid.mod({ i, j }, mapSize))
             }
         }
 
