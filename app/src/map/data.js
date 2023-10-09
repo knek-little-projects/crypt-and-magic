@@ -1,14 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import useGrid from "./grid"
-import useGridHover from "./gridhover"
-import useDragOffset from "./dragoffset"
-import useAssets from './assets'
+
+Number.prototype.mod = function (n) {
+    "use strict";
+    return ((this % n) + n) % n;
+}
 
 
-function useMatrix({ defaultValue }) {
+function useMatrix({ defaultValue, transform }) {
     const [data, setData] = useState({})
 
-    function key({ i, j }) {
+    function key(cell) {
+        const { i, j } = transform(cell)
         return i + " " + j
     }
 
@@ -35,9 +37,11 @@ function useMatrix({ defaultValue }) {
     }
 }
 
+export default function useMapData() {
+    const mapWrap = 10
+    const transform = ({ i, j }) => ({ i: i.mod(mapWrap), j: j.mod(mapWrap) })
 
-export default function useMap() {
-    const background = useMatrix({ defaultValue: "grass" })
+    const background = useMatrix({ defaultValue: "grass", transform })
 
     function setData(data) {
         background.setData(data.background)
@@ -56,8 +60,9 @@ export default function useMap() {
     function saveToLocalStorage() {
         localStorage.setItem("map", JSON.stringify(toData()))
     }
-    
+
     return {
+        mapWrap,
         loadFromLocalStorage,
         saveToLocalStorage,
         background,

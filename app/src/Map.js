@@ -1,29 +1,32 @@
 import React, { useEffect, useRef, useState } from 'react';
-import useGrid from "./grid"
-import useGridHover from "./gridhover"
-import useDragOffset from "./dragoffset"
 import useAssets from './assets'
 import "./App.scss"
-import useMap from './map';
+import useGridHover from './gridhover';
+import useDragOffset from './dragoffset';
+import useGrid from './grid';
 
 export default function Map({
-    map,
+    data,
     hoverSize = 1,
-    onMouseDown = () => { },
-    onMouseUp = () => { },
-    onMouseMove = () => { },
+    onBrush = () => { },
 }) {
+    const { offset, dragHandlers } = useDragOffset({ mouseButton: 2 })
+
+    const mapSize = 10
     const cellSize = 50
+    const grid = useGrid({ offset, cellSize, mapSize })
+
     const width = 500
     const height = 500
     const displayIJ = true
-    const mapSize = 10
-
-    const { offset, dragHandlers } = useDragOffset({ mouseButton: 2 })
-    const grid = useGrid({ offset, cellSize, mapSize })
 
     const ref = useRef()
     const { hoverAbsCell, onGridHover, onGridLeave } = useGridHover(grid, ref)
+
+    const { dragHandlers: brushHandlers } = useDragOffset({
+        mouseButton: 0,
+        onOffsetChange: e => onBrush(grid.getAbsCellByEvent(e, ref.current))
+    })
 
     const cells = []
 
@@ -31,9 +34,9 @@ export default function Map({
 
     for (let i = -1; i < width / cellSize; i++) {
         for (let j = -1; j < height / cellSize; j++) {
-            const absCell = grid.mod(grid.getAbsCellByScreenCell({ i, j }), mapSize)
+            const absCell = grid.getAbsCellByScreenCell({ i, j })
             const { x, y } = grid.getOffsetedScreenCellPointByScreenCell({ i, j })
-            const backgroundId = map.background.getItem(absCell)
+            const backgroundId = data.background.getItem(absCell)
             cells.push(
                 <div
                     key={`cell_${i}_${j}`}
@@ -83,7 +86,6 @@ export default function Map({
                     backgroundColor: "rgba(100, 100, 100, 0.5)"
                 }}
             >
-                {/* <img draggable={false} /> */}
             </div>
         )
     }
@@ -127,10 +129,11 @@ export default function Map({
                     width: width + 'px',
                     height: height + 'px',
                 }}
+
                 onContextMenu={e => e.preventDefault()}
-                onMouseDown={e => onMouseDown(e) + dragHandlers.onMouseDown(e)}
-                onMouseUp={e => onMouseUp(e) + dragHandlers.onMouseUp(e)}
-                onMouseMove={e => onMouseMove(e) + dragHandlers.onMouseMove(e) + onGridHover(e)}
+                onMouseDown={e => dragHandlers.onMouseDown(e) + brushHandlers.onMouseDown(e)}
+                onMouseUp={e => dragHandlers.onMouseUp(e) + brushHandlers.onMouseUp(e)}
+                onMouseMove={e => dragHandlers.onMouseMove(e) + brushHandlers.onMouseMove(e) + onGridHover(e)}
                 onMouseLeave={e => onGridLeave(e)}
             >
                 {cells}

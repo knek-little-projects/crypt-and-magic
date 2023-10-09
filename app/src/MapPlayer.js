@@ -1,19 +1,21 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
+import useMapData from "./map/data"
+import useGrid from "./grid"
+import useDragOffset from "./dragoffset"
 import Map from "./Map"
-import useMap from "./map"
 
 export default function MapPlayer() {
-    const map = useMap()
-
+    const data = useMapData()
+    
     useEffect(() => {
         try {
-            map.loadFromLocalStorage()
+            data.loadFromLocalStorage()
         } catch (e) {
 
         }
     }, [])
 
     return (
-        <Map map={map} />
+        <Map data={data} />
     )
 }
