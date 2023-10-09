@@ -1,15 +1,15 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import MapEditor from './MapEditor';
+import MapPlayer from './MapPlayer';
 
 function App() {
   return (
     <BrowserRouter>
       <Navigation />
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<MapPlayer />} />
         <Route path="/editor" element={<MapEditor />} />
-        <Route path="/player" element={<ContactPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
@@ -20,9 +20,8 @@ function Navigation() {
   return (
     <nav>
       <ul>
-        <li><Link to="/">Home</Link></li>
-        <li><Link to="/editor">Map Editor</Link></li>
-        <li><Link to="/contact">Contact</Link></li>
+        <li><Link to="/">Play</Link></li>
+        <li><Link to="/editor">Edit</Link></li>
       </ul>
     </nav>
   );

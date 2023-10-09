@@ -14,7 +14,8 @@ export default function useDragOffset({
         if (e.button === mouseButton) {
             setLastPos({ x: e.clientX, y: e.clientY });
             setPrevOffset(offset)
-            setDragging(true);
+            setDragging(true)
+            onOffsetChange(e)
         }
     }
 

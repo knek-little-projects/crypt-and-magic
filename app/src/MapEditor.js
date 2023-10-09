@@ -5,6 +5,7 @@ import useDragOffset from "./dragoffset"
 import useAssets from './assets'
 
 import "./App.scss"
+import useMap from './map';
 
 function MapEditorBrushButton({ src, onClick, children }) {
     return (
@@ -13,33 +14,6 @@ function MapEditorBrushButton({ src, onClick, children }) {
             {children}
         </button>
     )
-}
-
-function useMatrix({ defaultValue }) {
-    const [dict, setDict] = useState({})
-
-    function key({ i, j }) {
-        return i + " " + j
-    }
-
-    function getItem(cell) {
-        return dict[key(cell)] || defaultValue
-    }
-
-    function setItems(cells, value) {
-        const newObject = {}
-        for (const c of cells) {
-            newObject[key(c)] = value
-        }
-        setDict({
-            ...dict,
-            ...newObject,
-        })
-    }
-    return {
-        getItem,
-        setItems,
-    }
 }
 
 
@@ -56,7 +30,7 @@ export default function MapEditor() {
     const ref = useRef()
     const { hoverAbsCell, onGridHover, onGridLeave } = useGridHover(grid, ref)
 
-    const background = useMatrix({ defaultValue: "grass" })
+    const map = useMap()
     const cells = []
 
     const { assets, getImageUrlById } = useAssets()
@@ -65,7 +39,7 @@ export default function MapEditor() {
         for (let j = -1; j < height / cellSize; j++) {
             const absCell = grid.mod(grid.getAbsCellByScreenCell({ i, j }), mapSize)
             const { x, y } = grid.getOffsetedScreenCellPointByScreenCell({ i, j })
-            const backgroundId = background.getItem(absCell)
+            const backgroundId = map.background.getItem(absCell)
             cells.push(
                 <div
                     key={`cell_${i}_${j}`}
@@ -145,43 +119,26 @@ export default function MapEditor() {
             }
         }
 
-        background.setItems(cells, brush.id)
+        map.background.setItems(cells, brush.id)
     }
     const { dragHandlers: brushHandlers } = useDragOffset({
         mouseButton: 0,
         onOffsetChange: e => setBackgroundAtEvent(e)
     })
-
-    // const players = [
-    //     {
-    //         cell: {
-    //             i: 0,
-    //             j: 0,
-    //         },
-    //         image: {
-    //             id: "wizard",
-    //         }
-    //     }
-    // ]
-
-    // players.forEach(p => {
-    //     const { x, y } = grid.getOffsetedScreenCellPointByAbsCell(grid.mod(p.cell, mapSize))
-    //     cells.push(
-    //         <div
-    //             className='cell'
-    //             style={{
-    //                 left: x + 'px',
-    //                 top: y + 'px',
-    //                 width: cellSize + 'px',
-    //                 height: cellSize + 'px',
-    //             }}
-    //         >
-    //             <img draggable={false} src={getImageUrlById(p.image.id)} />
-    //         </div>
-    //     )
-    // })
-
-    // const isPlaying = true
+    
+    const save = () => {
+        localStorage.setItem("map", JSON.stringify(map.toData()))
+    }
+    const load = () => {
+        map.setData(JSON.parse(localStorage.getItem("map")))
+    }
+    useEffect(() => {
+        try {
+            load()
+        } catch(e) {
+            
+        }
+    }, [])
 
     return (
         <div className='MapEditor'>
@@ -212,6 +169,9 @@ export default function MapEditor() {
                     {cells}
                 </div>
             </div>
+            <hr />
+            <button onClick={save}>SAVE</button>
+            <button onClick={load}>LOAD</button>
         </div>
     );
 }
