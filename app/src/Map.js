@@ -8,7 +8,9 @@ import useGrid from './grid';
 export default function Map({
     data,
     hoverSize = 1,
+    hoverImageUrl = null,
     onBrush = () => { },
+    onHover = () => { },
 }) {
     const { offset, dragHandlers } = useDragOffset({ mouseButton: 2 })
 
@@ -83,12 +85,20 @@ export default function Map({
                     top: y + 'px',
                     width: cellWidth + 'px',
                     height: cellHeight + 'px',
-                    backgroundColor: "rgba(100, 100, 100, 0.5)"
+                    backgroundColor: "rgba(100, 100, 100, 0.5)",
                 }}
             >
+                {
+                    hoverImageUrl &&
+                    <img src={hoverImageUrl} draggable={false} />
+                }
             </div>
         )
     }
+
+    useEffect(() => {
+        onHover(hoverAbsCell)
+    }, [hoverAbsCell])
 
     // const players = [
     //     {
