@@ -18,10 +18,35 @@ export default function useAssets() {
             id: "wizard",
             src: "/map/wizard.png",
             type: "char",
-        }
+        },
+        {
+            name: "arrow",
+            id: "green-darr",
+            src: "/map/green-darr.png",
+            type: "arrow",
+        },
+        {
+            name: "arrow",
+            id: "brown-darr",
+            src: "/map/brown-darr.png",
+            type: "arrow",
+        },
+        {
+            name: "arrow",
+            id: "red-darr",
+            src: "/map/red-darr.png",
+            type: "arrow",
+        },
     ]
     function findAssetById(id) {
         return assets.find(o => o.id === id)
+    }
+    function getAssetById(id) {
+        const asset = findAssetById(id)
+        if (!asset) {
+            throw Error(`Asset id '${id}' not found`)
+        }
+        return asset
     }
     function getImageUrlById(id) {
         const asset = findAssetById(id)
@@ -33,6 +58,7 @@ export default function useAssets() {
     return {
         assets,
         getImageUrlById,
+        getAssetById,
         findAssetById,
     }
 }

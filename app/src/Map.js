@@ -4,9 +4,10 @@ import "./App.scss"
 import useGridHover from './gridhover';
 import useDragOffset from './dragoffset';
 import useGrid from './grid';
+import { BACKGROUND, CHARACTERS } from './map/layer-types';
 
 export default function Map({
-    data,
+    getItem,
     hoverSize = 1,
     hoverImageUrl = null,
     onBrush = () => { },
@@ -38,8 +39,8 @@ export default function Map({
         for (let j = -1; j < height / cellSize; j++) {
             const absCell = grid.getAbsCellByScreenCell({ i, j });
             const { x, y } = grid.getOffsetedScreenCellPointByScreenCell({ i, j })
-            
-            const backgroundId = data.background.getItem(absCell) || "grass"
+
+            const backgroundId = getItem(BACKGROUND, absCell) || "grass"
             cells.push(
                 <div
                     key={`cell_${i}_${j}`}
@@ -62,7 +63,7 @@ export default function Map({
                 </div>
             )
 
-            const foregroundId = data.foreground.getItem(absCell)
+            const foregroundId = getItem(CHARACTERS, absCell)
             if (foregroundId) {
                 cells.push(
                     <div

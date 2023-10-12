@@ -7,33 +7,37 @@ Number.prototype.mod = function (n) {
 
 export default function useMapData() {
     const mapSize = 10
-    
+
     function wrap({ i, j }) {
         return { i: i.mod(mapSize), j: j.mod(mapSize) }
     }
 
-    function key(cell) {
+    function key(layer, cell) {
         const { i, j } = wrap(cell)
-        return i + " " + j
+        return layer + " " + i + " " + j
     }
 
-    class ImmutableLayer {
+    function isLayerInKey(layer, key) {
+        return String(layer) === key.split(" ")[0]
+    }
+
+    class Layers {
         constructor(data) {
             this._data = data || {}
         }
 
-        getItem(cell) {
-            return this._data[key(cell)]
+        getItem(layer, cell) {
+            return this._data[key(layer, cell)]
         }
 
         mutate(data) {
-            return new ImmutableLayer(data)
+            return new Layers(data)
         }
 
-        withManyUpdated(cells, value) {
+        withManyUpdated(layer, cells, value) {
             const updates = {}
             for (const cell of cells) {
-                updates[key(cell)] = value
+                updates[key(layer, cell)] = value
             }
             return this.mutate({
                 ...this._data,
@@ -41,48 +45,58 @@ export default function useMapData() {
             })
         }
 
-        withOneUpdated(cell, value) {
-            return this.withManyUpdated([cell], value)
+        withOneUpdated(layer, cell, value) {
+            return this.withManyUpdated(layer, [cell], value)
         }
 
         raw() {
             return { ...this._data }
         }
 
-        map(fn) {
+        map(layer, fn) {
             const copy = {}
             for (const key in this._data) {
-                const val = fn(this._data[key])
-                if (val) {
-                    copy[key] = val
+                if (isLayerInKey(layer, key)) {
+                    const val = fn(this._data[key])
+                    if (val) {
+                        copy[key] = val
+                    }
+                } else {
+                    copy[key] = this._data[key]
                 }
             }
             return this.mutate(copy)
         }
+
+        updated(layer, what, how) {
+            if (typeof what === "function") {
+                return this.map(layer, what)
+            } else if (what instanceof Array) {
+                return this.withManyUpdated(layer, what, how)
+            } else {
+                return this.withOneUpdated(layer, what, how)
+            }
+        }
     }
 
-    const [background, setBackground] = useState(new ImmutableLayer())
-    const [foreground, setForeground] = useState(new ImmutableLayer())
+    const [layers, setLayers] = useState(new Layers())
+    window.$layers = layers
 
     function reactLoadFromLocalStorage() {
-        const { background, foreground } = JSON.parse(localStorage.getItem("map"))
-        setBackground(new ImmutableLayer(background))
-        setForeground(new ImmutableLayer(foreground))
+        const { layers } = JSON.parse(localStorage.getItem("map"))
+        setLayers(new Layers(layers))
     }
 
     function saveToLocalStorage() {
         localStorage.setItem("map", JSON.stringify({
-            background: background.raw(),
-            foreground: foreground.raw(),
+            layers: layers.raw()
         }))
     }
-
     return {
-        background,
-        foreground,
+        getItem: (layer, cell) => layers.getItem(layer, cell),
+        layers,
+        setLayers,
         reactLoadFromLocalStorage,
         saveToLocalStorage,
-        setBackground,
-        setForeground,
     }
 }

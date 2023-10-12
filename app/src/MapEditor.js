@@ -4,7 +4,7 @@ import useAssets from './assets'
 import "./App.scss"
 import useMapData from './map/data';
 import Map from "./Map"
-
+import { BACKGROUND, CHARACTERS } from './map/layer-types';
 
 function MapEditorBrushButton({ src, onClick, children }) {
     return (
@@ -36,7 +36,10 @@ export default function MapEditor() {
         const asset = findAssetById(brush.id)
 
         if (asset.type === "char") {
-            data.setForeground(data.foreground.map(id => id !== asset.id ? id : undefined).withOneUpdated(center, asset.id))
+            data.setLayers(data.layers
+                .updated(CHARACTERS, id => id !== asset.id ? id : undefined)
+                .updated(CHARACTERS, center, asset.id)
+            )
         } else {
             const size = brush.size
             const cells = []
@@ -46,13 +49,13 @@ export default function MapEditor() {
                 }
             }
 
-            data.setBackground(data.background.withManyUpdated(cells, brush.id))
+            data.setLayers(data.layers.updated(BACKGROUND, cells, brush.id))
         }
     }
 
     function onHover(cell) {
         if (cell) {
-            if (brush.id === data.background.getItem(cell)) {
+            if (brush.id === data.getItem("background", cell)) {
                 setHoverImageUrl(null)
             } else {
                 setHoverImageUrl(getImageUrlById(brush.id))
@@ -87,7 +90,7 @@ export default function MapEditor() {
             </div>
             <hr />
             <Map
-                data={data}
+                getItem={data.getItem}
                 onBrush={onBrush}
                 onHover={onHover}
                 hoverSize={brush.size}
