@@ -119,36 +119,6 @@ export default function Map({
         onHover(hoverAbsCell)
     }, [hoverAbsCell])
 
-    // const players = [
-    //     {
-    //         cell: {
-    //             i: 0,
-    //             j: 0,
-    //         },
-    //         image: {
-    //             id: "wizard",
-    //         }
-    //     }
-    // ]
-
-    // players.forEach(p => {
-    //     const { x, y } = grid.getOffsetedScreenCellPointByAbsCell(grid.mod(p.cell, mapSize))
-    //     cells.push(
-    //         <div
-    //             className='cell'
-    //             style={{
-    //                 left: x + 'px',
-    //                 top: y + 'px',
-    //                 width: cellSize + 'px',
-    //                 height: cellSize + 'px',
-    //             }}
-    //         >
-    //             <img draggable={false} src={getImageUrlById(p.image.id)} />
-    //         </div>
-    //     )
-    // })
-
-
     return (
         <div className="map">
             <div

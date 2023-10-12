@@ -38,9 +38,13 @@ export default function MapPlayer() {
         }
     }, [])
 
+    const onClick = cell => {
+        console.log(cell)
+    }
+
     return (
         <>
-            <Map getItem={data.getItem} />
+            <Map getItem={data.getItem} onClick={onClick} />
             <Arrow colorType="red" x={100} y={100} width={40} height={40} />
         </>
     )
