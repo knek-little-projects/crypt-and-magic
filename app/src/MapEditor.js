@@ -5,6 +5,7 @@ import "./App.scss"
 import useMapData from './map/data';
 import Map from "./Map"
 
+
 function MapEditorBrushButton({ src, onClick, children }) {
     return (
         <button onClick={onClick}>
@@ -16,9 +17,10 @@ function MapEditorBrushButton({ src, onClick, children }) {
 
 export default function MapEditor() {
     const data = useMapData()
-    const { assets, getImageUrlById } = useAssets()
+    const { assets, getImageUrlById, findAssetById } = useAssets()
     const [brush, setBrush] = useState({ id: "grass", size: 1 })
     const [hoverImageUrl, setHoverImageUrl] = useState(null)
+    const mapSize = 10
 
     const buttons = assets.filter(o => o.type === "background").map(o => (
         <MapEditorBrushButton src={o.src} key={o.id} onClick={() => setBrush({ id: o.id, size: 1 })}>
@@ -31,14 +33,21 @@ export default function MapEditor() {
             return
         }
 
-        const size = brush.size
-        const cells = []
-        for (let i = center.i - Math.floor(size / 2); i <= center.i + Math.floor(size / 2); i++) {
-            for (let j = center.j - Math.floor(size / 2); j <= center.j + Math.floor(size / 2); j++) {
-                cells.push({ i, j })
+        const asset = findAssetById(brush.id)
+
+        if (asset.type === "char") {
+            data.setForeground(data.foreground.map(id => id !== asset.id ? id : undefined).withOneUpdated(center, asset.id))
+        } else {
+            const size = brush.size
+            const cells = []
+            for (let i = center.i - Math.floor(size / 2); i <= center.i + Math.floor(size / 2); i++) {
+                for (let j = center.j - Math.floor(size / 2); j <= center.j + Math.floor(size / 2); j++) {
+                    cells.push({ i, j })
+                }
             }
+
+            data.setBackground(data.background.withManyUpdated(cells, brush.id))
         }
-        data.background.setItems(cells, brush.id)
     }
 
     function onHover(cell) {
@@ -55,7 +64,7 @@ export default function MapEditor() {
 
     useEffect(() => {
         try {
-            data.loadFromLocalStorage()
+            data.reactLoadFromLocalStorage()
         } catch (e) {
 
         }
@@ -86,7 +95,7 @@ export default function MapEditor() {
             />
             <hr />
             <button onClick={() => data.saveToLocalStorage()}>SAVE</button>
-            <button onClick={() => data.loadFromLocalStorage()}>LOAD</button>
+            <button onClick={() => data.reactLoadFromLocalStorage()}>LOAD</button>
         </div>
     );
 }

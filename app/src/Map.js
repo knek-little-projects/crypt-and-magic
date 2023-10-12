@@ -36,9 +36,10 @@ export default function Map({
 
     for (let i = -1; i < width / cellSize; i++) {
         for (let j = -1; j < height / cellSize; j++) {
-            const absCell = grid.getAbsCellByScreenCell({ i, j })
+            const absCell = grid.getAbsCellByScreenCell({ i, j });
             const { x, y } = grid.getOffsetedScreenCellPointByScreenCell({ i, j })
-            const backgroundId = data.background.getItem(absCell)
+            
+            const backgroundId = data.background.getItem(absCell) || "grass"
             cells.push(
                 <div
                     key={`cell_${i}_${j}`}
@@ -60,6 +61,23 @@ export default function Map({
                     }
                 </div>
             )
+
+            const foregroundId = data.foreground.getItem(absCell)
+            if (foregroundId) {
+                cells.push(
+                    <div
+                        key={`cell_fg_${i}_${j}`}
+                        className='cell'
+                        style={{
+                            left: x + 'px',
+                            top: y + 'px',
+                            width: cellSize + 'px',
+                            height: cellSize + 'px',
+                            backgroundImage: "url('" + getImageUrlById(foregroundId) + "')",
+                        }}
+                    />
+                )
+            }
         }
     }
 

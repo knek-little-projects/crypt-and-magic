@@ -5,68 +5,84 @@ Number.prototype.mod = function (n) {
     return ((this % n) + n) % n;
 }
 
-
-function useMatrix({ defaultValue, transform }) {
-    const [data, setData] = useState({})
+export default function useMapData() {
+    const mapSize = 10
+    
+    function wrap({ i, j }) {
+        return { i: i.mod(mapSize), j: j.mod(mapSize) }
+    }
 
     function key(cell) {
-        const { i, j } = transform(cell)
+        const { i, j } = wrap(cell)
         return i + " " + j
     }
 
-    function getItem(cell) {
-        return data[key(cell)] || defaultValue
-    }
-
-    function setItems(cells, value) {
-        const update = {}
-        for (const c of cells) {
-            update[key(c)] = value
+    class ImmutableLayer {
+        constructor(data) {
+            this._data = data || {}
         }
-        setData({
-            ...data,
-            ...update,
-        })
-    }
 
-    return {
-        getItem,
-        setItems,
-        setData,
-        data,
-    }
-}
+        getItem(cell) {
+            return this._data[key(cell)]
+        }
 
-export default function useMapData() {
-    const mapWrap = 10
-    const transform = ({ i, j }) => ({ i: i.mod(mapWrap), j: j.mod(mapWrap) })
+        mutate(data) {
+            return new ImmutableLayer(data)
+        }
 
-    const background = useMatrix({ defaultValue: "grass", transform })
+        withManyUpdated(cells, value) {
+            const updates = {}
+            for (const cell of cells) {
+                updates[key(cell)] = value
+            }
+            return this.mutate({
+                ...this._data,
+                ...updates,
+            })
+        }
 
-    function setData(data) {
-        background.setData(data.background)
-    }
+        withOneUpdated(cell, value) {
+            return this.withManyUpdated([cell], value)
+        }
 
-    function toData() {
-        return {
-            background: background.data
+        raw() {
+            return { ...this._data }
+        }
+
+        map(fn) {
+            const copy = {}
+            for (const key in this._data) {
+                const val = fn(this._data[key])
+                if (val) {
+                    copy[key] = val
+                }
+            }
+            return this.mutate(copy)
         }
     }
 
-    function loadFromLocalStorage() {
-        setData(JSON.parse(localStorage.getItem("map")))
+    const [background, setBackground] = useState(new ImmutableLayer())
+    const [foreground, setForeground] = useState(new ImmutableLayer())
+
+    function reactLoadFromLocalStorage() {
+        const { background, foreground } = JSON.parse(localStorage.getItem("map"))
+        setBackground(new ImmutableLayer(background))
+        setForeground(new ImmutableLayer(foreground))
     }
 
     function saveToLocalStorage() {
-        localStorage.setItem("map", JSON.stringify(toData()))
+        localStorage.setItem("map", JSON.stringify({
+            background: background.raw(),
+            foreground: foreground.raw(),
+        }))
     }
 
     return {
-        mapWrap,
-        loadFromLocalStorage,
-        saveToLocalStorage,
         background,
-        setData,
-        toData,
+        foreground,
+        reactLoadFromLocalStorage,
+        saveToLocalStorage,
+        setBackground,
+        setForeground,
     }
 }

@@ -20,11 +20,19 @@ export default function useAssets() {
             type: "char",
         }
     ]
+    function findAssetById(id) {
+        return assets.find(o => o.id === id)
+    }
     function getImageUrlById(id) {
-        return assets.find(o => o.id === id).src
+        const asset = findAssetById(id)
+        if (!asset) {
+            throw Error(`Cannot find asset with id '${id}'`)
+        }
+        return asset.src
     }
     return {
         assets,
         getImageUrlById,
+        findAssetById,
     }
 }

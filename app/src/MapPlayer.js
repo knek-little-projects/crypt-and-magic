@@ -6,10 +6,10 @@ import Map from "./Map"
 
 export default function MapPlayer() {
     const data = useMapData()
-    
+
     useEffect(() => {
         try {
-            data.loadFromLocalStorage()
+            data.reactLoadFromLocalStorage()
         } catch (e) {
 
         }
