@@ -36,10 +36,7 @@ export default function MapEditor() {
         const asset = findAssetById(brush.id)
 
         if (asset.type === "char") {
-            data.setLayers(data.layers
-                .updated(CHARACTERS, id => id !== asset.id ? id : undefined)
-                .updated(CHARACTERS, center, asset.id)
-            )
+            data.setLayers(data.layers.reset(CHARACTERS, center, asset.id))
         } else {
             const size = brush.size
             const cells = []

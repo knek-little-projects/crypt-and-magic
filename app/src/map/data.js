@@ -21,6 +21,11 @@ export default function useMapData() {
         return String(layer) === key.split(" ")[0]
     }
 
+    function keySplit(key) {
+        const [layer, i, j] = key.split(" ")
+        return [layer, { i: parseInt(i), j: parseInt(j) }]
+    }
+
     class Layers {
         constructor(data) {
             this._data = data || {}
@@ -34,7 +39,7 @@ export default function useMapData() {
             return new Layers(data)
         }
 
-        withManyUpdated(layer, cells, value) {
+        withManyUpdatedBySignelValue(layer, cells, value) {
             const updates = {}
             for (const cell of cells) {
                 updates[key(layer, cell)] = value
@@ -43,6 +48,25 @@ export default function useMapData() {
                 ...this._data,
                 ...updates,
             })
+        }
+
+        withManyUpdatedByMany(layer, cells, values) {
+            const updates = {}
+            for (let i = 0; i < cells.length; i++) {
+                updates[key(layer, cells[i])] = values[i]
+            }
+            return this.mutate({
+                ...this._data,
+                ...updates,
+            })
+        }
+
+        withManyUpdated(layer, cells, what) {
+            if (what instanceof Array) {
+                return this.withManyUpdatedByMany(layer, cells, what)
+            } else {
+                return this.withManyUpdatedBySignelValue(layer, cells, what)
+            }
         }
 
         withOneUpdated(layer, cell, value) {
@@ -68,6 +92,17 @@ export default function useMapData() {
             return this.mutate(copy)
         }
 
+        find(layer, fn) {
+            for (const key in this._data) {
+                const [_layer, cell] = keySplit(key)
+                if (layer == _layer) {
+                    if (fn(this._data[key])) {
+                        return cell
+                    }
+                }
+            }
+        }
+
         updated(layer, what, how) {
             if (typeof what === "function") {
                 return this.map(layer, what)
@@ -76,6 +111,10 @@ export default function useMapData() {
             } else {
                 return this.withOneUpdated(layer, what, how)
             }
+        }
+
+        reset(layer, what, how) {
+            return this.map(layer, () => undefined).updated(layer, what, how)
         }
     }
 

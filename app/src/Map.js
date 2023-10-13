@@ -36,6 +36,29 @@ function Arrow({
     )
 }
 
+function Cross({ colorType }) {
+    const asset = useAssets().getAssetById(colorType + "-cross")
+    return (
+        <div style={{
+            // position: 'absolute',
+            // left: x + 'px',
+            // top: y + 'px',
+            // width: width + 'px',
+            // height: height + 'px',
+            width: "100%",
+            height: "100%",
+        }}>
+            <img src={asset.src} style={{
+                position: "relative",
+                left: "10%",
+                top: "10%",
+                width:  "80%",
+                height: "80%",
+            }} />
+        </div>
+    )
+}
+
 export default function Map({
     getItem,
     hoverSize = 1,
@@ -65,6 +88,12 @@ export default function Map({
 
     function getArrow(description) {
         const colors = { g: "green", r: "red", b: "brown", e: "grey" }
+        const colorType = colors[description[0]]
+
+        if (description[1] === "c") {
+            return <Cross colorType={colorType} />
+        }
+
         const angles = {
             r: -90,
             l: 90,
@@ -76,7 +105,6 @@ export default function Map({
             br: 0 - 45,
         }
 
-        const colorType = colors[description[0]]
         const angle = angles[description.slice(1)]
         return <Arrow colorType={colorType} angle={angle} />
     }
