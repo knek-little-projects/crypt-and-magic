@@ -1,8 +1,7 @@
+import { BACKGROUND, CHARACTERS, PATHFINDER } from "./map/layer-types"
 import { useEffect, useRef } from "react"
 import useMapData from "./map/data"
 import Map from "./Map"
-import { BACKGROUND, CHARACTERS, PATHFINDER } from "./map/layer-types"
-
 
 function eq(a, b) {
     return a.i === b.i && a.j === b.j
@@ -129,10 +128,9 @@ export default function MapPlayer() {
         const ids = []
         cells.shift()
 
-        const colorType = "r"
+        const colorType = "g"
         for (let i = 0; i < cells.length - 1; i++) {
             const id = colorType + getArrowDirection(cells[i], cells[i + 1])
-            console.log(id, cells[i], cells[i+1])
             ids.push(id)
         }
         

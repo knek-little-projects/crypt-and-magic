@@ -5,59 +5,8 @@ import useGridHover from './gridhover';
 import useDragOffset from './dragoffset';
 import useGrid from './grid';
 import { BACKGROUND, CHARACTERS, PATHFINDER } from './map/layer-types';
+import Step from "./map/step"
 
-
-
-function Arrow({
-    // x, y, 
-    width, height,
-    angle,
-    colorType }) {
-    const asset = useAssets().getAssetById(colorType + "-darr")
-
-    return (
-        <div style={{
-            // position: 'absolute',
-            // left: x + 'px',
-            // top: y + 'px',
-            // width: width + 'px',
-            // height: height + 'px',
-            width: "100%",
-            height: "100%",
-            rotate: angle + 'deg',
-        }}>
-            <img src={asset.src} style={{
-                position: "relative",
-                left: "13.5%",
-                width: "75%",
-                height: "100%",
-            }} />
-        </div>
-    )
-}
-
-function Cross({ colorType }) {
-    const asset = useAssets().getAssetById(colorType + "-cross")
-    return (
-        <div style={{
-            // position: 'absolute',
-            // left: x + 'px',
-            // top: y + 'px',
-            // width: width + 'px',
-            // height: height + 'px',
-            width: "100%",
-            height: "100%",
-        }}>
-            <img src={asset.src} style={{
-                position: "relative",
-                left: "10%",
-                top: "10%",
-                width:  "80%",
-                height: "80%",
-            }} />
-        </div>
-    )
-}
 
 export default function Map({
     getItem,
@@ -84,30 +33,6 @@ export default function Map({
         mouseButton: 0,
         onOffsetChange: e => onBrush(grid.getAbsCellByEvent(e, ref.current))
     })
-
-
-    function getArrow(description) {
-        const colors = { g: "green", r: "red", b: "brown", e: "grey" }
-        const colorType = colors[description[0]]
-
-        if (description[1] === "c") {
-            return <Cross colorType={colorType} />
-        }
-
-        const angles = {
-            r: -90,
-            l: 90,
-            t: 180,
-            b: 0,
-            tl: 180 - 45,
-            tr: 180 + 45,
-            bl: 0 + 45,
-            br: 0 - 45,
-        }
-
-        const angle = angles[description.slice(1)]
-        return <Arrow colorType={colorType} angle={angle} />
-    }
 
     const cells = []
 
@@ -171,7 +96,7 @@ export default function Map({
                             height: cellSize + 'px',
                         }}
                     >
-                        {getArrow(arrowDescription)}
+                        <Step description={arrowDescription} />
                     </div>
                 )
             }
