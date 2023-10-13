@@ -4,7 +4,37 @@ import "./App.scss"
 import useGridHover from './gridhover';
 import useDragOffset from './dragoffset';
 import useGrid from './grid';
-import { BACKGROUND, CHARACTERS } from './map/layer-types';
+import { BACKGROUND, CHARACTERS, PATHFINDER } from './map/layer-types';
+
+
+
+function Arrow({
+    // x, y, 
+    width, height,
+    angle,
+    colorType }) {
+    const asset = useAssets().getAssetById(colorType + "-darr")
+
+    return (
+        <div style={{
+            // position: 'absolute',
+            // left: x + 'px',
+            // top: y + 'px',
+            // width: width + 'px',
+            // height: height + 'px',
+            width: "100%",
+            height: "100%",
+            rotate: angle + 'deg',
+        }}>
+            <img src={asset.src} style={{
+                position: "relative",
+                left: "13.5%",
+                width: "75%",
+                height: "100%",
+            }} />
+        </div>
+    )
+}
 
 export default function Map({
     getItem,
@@ -12,6 +42,7 @@ export default function Map({
     hoverImageUrl = null,
     onBrush = () => { },
     onHover = () => { },
+    onClick = () => { },
 }) {
     const { offset, dragHandlers } = useDragOffset({ mouseButton: 2 })
 
@@ -30,6 +61,25 @@ export default function Map({
         mouseButton: 0,
         onOffsetChange: e => onBrush(grid.getAbsCellByEvent(e, ref.current))
     })
+
+
+    function getArrow(description) {
+        const colors = { g: "green", r: "red", b: "brown", e: "grey" }
+        const angles = {
+            r: -90,
+            l: 90,
+            t: 180,
+            b: 0,
+            tl: 180 - 45,
+            tr: 180 + 45,
+            bl: 0 + 45,
+            br: 0 - 45,
+        }
+
+        const colorType = colors[description[0]]
+        const angle = angles[description.slice(1)]
+        return <Arrow colorType={colorType} angle={angle} />
+    }
 
     const cells = []
 
@@ -79,6 +129,24 @@ export default function Map({
                     />
                 )
             }
+
+            const arrowDescription = getItem(PATHFINDER, absCell)
+            if (arrowDescription) {
+                cells.push(
+                    <div
+                        key={`cell_arrow_${i}_${j}`}
+                        className='cell'
+                        style={{
+                            left: x + 'px',
+                            top: y + 'px',
+                            width: cellSize + 'px',
+                            height: cellSize + 'px',
+                        }}
+                    >
+                        {getArrow(arrowDescription)}
+                    </div>
+                )
+            }
         }
     }
 
@@ -119,6 +187,10 @@ export default function Map({
         onHover(hoverAbsCell)
     }, [hoverAbsCell])
 
+    function _onClick(e) {
+        onClick(grid.getAbsCellByEvent(e, ref.current))
+    }
+
     return (
         <div className="map">
             <div
@@ -130,6 +202,7 @@ export default function Map({
                 }}
 
                 onContextMenu={e => e.preventDefault()}
+                onClick={e => _onClick(e)}
                 onMouseDown={e => dragHandlers.onMouseDown(e) + brushHandlers.onMouseDown(e)}
                 onMouseUp={e => dragHandlers.onMouseUp(e) + brushHandlers.onMouseUp(e)}
                 onMouseMove={e => dragHandlers.onMouseMove(e) + brushHandlers.onMouseMove(e) + onGridHover(e)}
