@@ -72,7 +72,7 @@ export default function MapPlayer() {
         const cell = moves.shift()
         data.setLayers(data.layers
             .removed(PATHFINDER, cell)
-            // .removed(CHARACTERS, player.cell)
+            .reset(CHARACTERS, cell, "wizard")
         )
     }, delay)
 
