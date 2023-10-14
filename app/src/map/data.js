@@ -113,6 +113,10 @@ export default function useMapData() {
             }
         }
 
+        removed(layer, what) {
+            return this.updated(layer, what, undefined)
+        }
+
         reset(layer, what, how) {
             return this.map(layer, () => undefined).updated(layer, what, how)
         }
