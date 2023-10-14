@@ -6,7 +6,7 @@ import useDragOffset from './dragoffset';
 import useGrid from './grid';
 import { BACKGROUND, CHARACTERS, PATHFINDER } from './map/layer-types';
 import Step from "./map/step"
-
+import * as cellFuncs from "./map/cell-funcs"
 
 export default function Map({
     getItem,
@@ -42,6 +42,23 @@ export default function Map({
         for (let j = -1; j < height / cellSize; j++) {
             const absCell = grid.getAbsCellByScreenCell({ i, j });
             const { x, y } = grid.getOffsetedScreenCellPointByScreenCell({ i, j })
+
+            if (cellFuncs.isOutsideOfMap(absCell, mapSize)) {
+                cells.push(
+                    <div
+                        key={`cell_${i}_${j}`}
+                        className='cell'
+                        style={{
+                            left: x + 'px',
+                            top: y + 'px',
+                            width: cellSize + 'px',
+                            height: cellSize + 'px',
+                            background: "black",
+                        }}
+                    />
+                )
+                continue;
+            }
 
             const backgroundId = getItem(BACKGROUND, absCell) || "grass"
             cells.push(

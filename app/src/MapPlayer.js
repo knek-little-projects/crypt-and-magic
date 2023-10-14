@@ -3,10 +3,8 @@ import { useEffect, useRef, useState } from "react"
 import useMapData from "./map/data"
 import Map from "./Map"
 import findPath from "./map/find-path"
+import * as cellFuncs from "./map/cell-funcs"
 
-function eq(a, b) {
-    return a.i === b.i && a.j === b.j
-}
 
 function getArrowDirection(a, b) {
     if (a.i < b.i && a.j === b.j) {
@@ -48,6 +46,7 @@ export default function MapPlayer() {
     const [runEmulation, setRunEmulation] = useState(false)
     const [moves, setMoves] = useState([])
     const [delay, setDelay] = useState(0)
+    const mapSize = 10
 
     const data = useMapData()
     const player = {
@@ -69,10 +68,10 @@ export default function MapPlayer() {
             return
         }
 
-        const cell = moves.shift()
+        const currentMove = moves.shift()
         data.setLayers(data.layers
-            .removed(PATHFINDER, cell)
-            .reset(CHARACTERS, cell, "wizard")
+            .removed(PATHFINDER, currentMove)
+            .reset(CHARACTERS, currentMove, "wizard")
         )
     }, delay)
 
@@ -87,6 +86,9 @@ export default function MapPlayer() {
     }, [runEmulation])
 
     const isObstacle = (cell) => {
+        if (cellFuncs.isOutsideOfMap(cell, mapSize)) {
+            return true
+        }
         const background = data.getItem(BACKGROUND, cell) || "grass"
         return background !== "grass"
     }
@@ -96,11 +98,11 @@ export default function MapPlayer() {
             return
         }
 
-        if (eq(cell, player.cell)) {
+        if (cellFuncs.eq(cell, player.cell)) {
             return
         }
 
-        if (moves.length > 0 && eq(moves[moves.length - 1], cell)) {
+        if (moves.length > 0 && cellFuncs.eq(moves[moves.length - 1], cell)) {
             setRunEmulation(true)
         }
 

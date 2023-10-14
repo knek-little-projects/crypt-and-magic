@@ -1,19 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-Number.prototype.mod = function (n) {
-    "use strict";
-    return ((this % n) + n) % n;
-}
 
 export default function useMapData() {
-    const mapSize = 10
-
-    function wrap({ i, j }) {
-        return { i: i.mod(mapSize), j: j.mod(mapSize) }
-    }
-
-    function key(layer, cell) {
-        const { i, j } = wrap(cell)
+    function key(layer, { i, j }) {
         return layer + " " + i + " " + j
     }
 
