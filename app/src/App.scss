@@ -16,7 +16,7 @@
       margin: 0;
       padding: 0;
       border: 1px solid black;
-      
+
       .debug.coordinates {
         color: black;
         padding: 5px;
@@ -42,4 +42,47 @@
   background: gray;
   margin-left: 5px;
   margin-right: 5px;
+}
+
+@keyframes opacityAnimation {
+  0% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1.0;
+  }
+
+  100% {
+    opacity: 0.5;
+  }
+}
+
+/* Применяем анимацию к элементу, который вы хотите анимировать */
+.opacityAnimation {
+  animation: opacityAnimation 1s ease-in-out infinite;
+}
+
+
+@keyframes borderAnimation {
+  0% {
+    border-color: #ff0000;
+  }
+  25% {
+    border-color: #00ff00;
+  }
+  50% {
+    border-color: #0000ff;
+  }
+  75% {
+    border-color: #00ff00;
+  }
+  100% {
+    border-color: #ff0000;
+  }
+}
+
+.animate-border {
+  border: 2px solid #ff0000;
+  animation: borderAnimation 2s linear infinite;
 }

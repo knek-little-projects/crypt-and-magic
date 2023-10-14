@@ -1,4 +1,4 @@
-import { BACKGROUND, CHARACTERS, PATHFINDER } from "./map/layer-types"
+import { BACKGROUND, CHARACTERS, PATHFINDER, SPELLS } from "./map/layer-types"
 import { useEffect, useRef, useState } from "react"
 import useMapData from "./map/data"
 import Map from "./Map"
@@ -22,12 +22,23 @@ function getArrowDirection(a, b) {
     }
 }
 
+class Spell {
+    constructor({ asset, size }) {
+        this.asset = asset
+        this.size = size
+    }
+
+    get id() {
+        return `${this.asset.id}_${this.size}`
+    }
+}
 
 
 export default function MapPlayer() {
     const [runEmulation, setRunEmulation] = useState(false)
     const [moves, setMoves] = useState([])
     const [delay, setDelay] = useState(0)
+    const [casted, setCasted] = useState(null)
     const { assets } = useAssets()
     const mapSize = 10
 
@@ -62,10 +73,19 @@ export default function MapPlayer() {
         if (!runEmulation) {
             return
         }
-        if (moves.length === 0) {
+
+        if (casted) {
+            setTimeout(() => {
+                data.setLayers(data.layers.cleared(SPELLS))
+                setRunEmulation(false)
+                setCasted(null)
+            }, 1000)
             return
         }
-        setDelay(100)
+
+        if (moves.length > 0) {
+            setDelay(100)
+        }
     }, [runEmulation])
 
     const isObstacle = (cell) => {
@@ -76,19 +96,7 @@ export default function MapPlayer() {
         return background !== "grass"
     }
 
-    const onClick = cell => {
-        if (runEmulation) {
-            return
-        }
-
-        if (cellFuncs.eq(cell, player.cell)) {
-            return
-        }
-
-        if (moves.length > 0 && cellFuncs.eq(moves[moves.length - 1], cell)) {
-            setRunEmulation(true)
-        }
-
+    function buildPathTo(cell) {
         const cells = findPath(isObstacle, player.cell, cell)
         if (!cells || cells.length == 0) {
             return
@@ -108,19 +116,73 @@ export default function MapPlayer() {
         data.setLayers(data.layers.reset(PATHFINDER, cells, ids))
     }
 
-    function selectSpell(spell) {
+    const onClick = cell => {
+        if (!player.cell) {
+            return
+        }
 
+        if (runEmulation) {
+            return
+        }
+
+        if (cellFuncs.eq(cell, player.cell)) {
+            return
+        }
+
+        if (moves.length > 0 && cellFuncs.eq(moves[moves.length - 1], cell)) {
+            setRunEmulation(true)
+
+            return
+        }
+
+        if (selectedSpell) {
+            data.setLayers(data.layers.reset(SPELLS, cell, selectedSpell.asset.id))
+            setCasted({ cell, spell: selectedSpell })
+            setRunEmulation(true)
+            setSelectedSpell(null)
+            return
+        }
+
+        buildPathTo(cell)
+    }
+
+    const [selectedSpell, setSelectedSpell] = useState(null)
+    const hoverSize = selectedSpell && selectedSpell.size || 1
+    const hoverImageUrl = selectedSpell && selectedSpell.asset.src
+
+    function clearPath() {
+        data.setLayers(data.layers.cleared(PATHFINDER))
+        setMoves([])
+    }
+
+    function switchSpell(spell) {
+        if (selectedSpell && selectedSpell.id === spell.id) {
+            setSelectedSpell(null)
+            return
+        }
+        setSelectedSpell(spell)
+        clearPath()
+    }
+
+    function clearSpells() {
+        data.setLayers(data.layers.cleared(SPELLS))
     }
 
     const magicButtons = []
-    const magicSpells = assets.filter(a => a.type === "magic").map(asset => ({ asset, size: 1 }))
+    const magicSpells = assets.filter(a => a.type === "magic").map(asset => new Spell({ asset, size: 1 }))
     for (const spell of magicSpells) {
         const key = spell.asset.id + "_" + spell.size
-        const onClick = () => selectSpell(spell)
+        const onClick = () => switchSpell(spell)
         const src = spell.asset.src
-        let text = spell.asset.name
+        const style = {}
+        // const style = selectedSpell && selectedSpell.id === spell.id && { border: "4px solid blue" } || { border: "4px solid #999" }
+        const className = selectedSpell && selectedSpell.id === spell.id && "animate-border"
+        const text = spell.asset.name
         magicButtons.push(
-            <button key={key} onClick={onClick}>
+            <button
+                disabled={runEmulation}
+
+                key={key} onClick={onClick} style={style} className={className}>
                 <img style={{ width: "32px" }} src={src} />
                 {text}
             </button>
@@ -129,8 +191,27 @@ export default function MapPlayer() {
 
     return (
         <>
-            <div>{magicButtons}</div>
-            <Map getItem={data.getItem} onClick={onClick} />
+            <div>
+                <button
+                    disabled={runEmulation}
+                    style={{ height: "40px" }}
+                    onClick={() => {
+                        clearPath()
+                        clearSpells()
+                        setSelectedSpell(null)
+                    }}>
+                    CLEAR
+                </button>
+                <div className="vr" />
+                {magicButtons}
+            </div>
+            <Map
+                hoverImageUrl={hoverImageUrl}
+                hoverSize={hoverSize}
+                getItem={data.getItem}
+                onClick={onClick}
+
+            />
         </>
     )
 }

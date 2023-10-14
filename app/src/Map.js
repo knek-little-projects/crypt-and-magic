@@ -4,7 +4,7 @@ import "./App.scss"
 import useGridHover from './gridhover';
 import useDragOffset from './dragoffset';
 import useGrid from './grid';
-import { BACKGROUND, CHARACTERS, PATHFINDER } from './map/layer-types';
+import { BACKGROUND, CHARACTERS, PATHFINDER, SPELLS } from './map/layer-types';
 import Step from "./map/step"
 import * as cellFuncs from "./map/cell-funcs"
 
@@ -97,6 +97,26 @@ export default function Map({
                             backgroundImage: "url('" + getImageUrlById(foregroundId) + "')",
                         }}
                     />
+                )
+            }
+
+            const spellId = getItem(SPELLS, absCell)
+            if (spellId) {
+                cells.push(
+                    <div
+                        key={`cell_planspell_${i}_${j}`}
+                        className='cell opacityAnimation'
+                        style={{
+                            left: x + 'px',
+                            top: y + 'px',
+                            width: cellSize + 'px',
+                            height: cellSize + 'px',
+                            // filter: "grayscale(0.99)",
+                            opacity: "0.75",
+                        }}
+                    >
+                        <img src={getImageUrlById(spellId)} draggable={false} />
+                    </div>
                 )
             }
 

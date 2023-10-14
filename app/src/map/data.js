@@ -97,17 +97,26 @@ export default function useMapData() {
                 return this.map(layer, what)
             } else if (what instanceof Array) {
                 return this.withManyUpdated(layer, what, how)
+            } else if (what === undefined) {
+                throw Error(`Layer updated(layer, what): 'what' cannot be undefined`)
             } else {
                 return this.withOneUpdated(layer, what, how)
             }
         }
 
+        cleared(layer) {
+            return this.map(layer, () => undefined)
+        }
+
         removed(layer, what) {
+            if (what === undefined) {
+                return this.cleared()
+            }
             return this.updated(layer, what, undefined)
         }
 
         reset(layer, what, how) {
-            return this.map(layer, () => undefined).updated(layer, what, how)
+            return this.cleared(layer).updated(layer, what, how)
         }
     }
 
