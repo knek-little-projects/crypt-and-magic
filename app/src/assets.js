@@ -55,6 +55,12 @@ export default function useAssets() {
             src: "/map/red-cross.png",
             type: "arrow",
         },
+        {
+            name: "fireball",
+            id: "fireball",
+            src: "/map/fireball.png",
+            type: "magic",
+        },
     ]
     function findAssetById(id) {
         return assets.find(o => o.id === id)

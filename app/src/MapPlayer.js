@@ -5,6 +5,7 @@ import Map from "./Map"
 import findPath from "./map/find-path"
 import * as cellFuncs from "./map/cell-funcs"
 import useInterval from "./react-interval"
+import useAssets from "./assets"
 
 
 function getArrowDirection(a, b) {
@@ -27,6 +28,7 @@ export default function MapPlayer() {
     const [runEmulation, setRunEmulation] = useState(false)
     const [moves, setMoves] = useState([])
     const [delay, setDelay] = useState(0)
+    const { assets } = useAssets()
     const mapSize = 10
 
     const data = useMapData()
@@ -106,8 +108,28 @@ export default function MapPlayer() {
         data.setLayers(data.layers.reset(PATHFINDER, cells, ids))
     }
 
+    function selectSpell(spell) {
+
+    }
+
+    const magicButtons = []
+    const magicSpells = assets.filter(a => a.type === "magic").map(asset => ({ asset, size: 1 }))
+    for (const spell of magicSpells) {
+        const key = spell.asset.id + "_" + spell.size
+        const onClick = () => selectSpell(spell)
+        const src = spell.asset.src
+        let text = spell.asset.name
+        magicButtons.push(
+            <button key={key} onClick={onClick}>
+                <img style={{ width: "32px" }} src={src} />
+                {text}
+            </button>
+        )
+    }
+
     return (
         <>
+            <div>{magicButtons}</div>
             <Map getItem={data.getItem} onClick={onClick} />
         </>
     )
