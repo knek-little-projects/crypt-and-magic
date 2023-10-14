@@ -61,6 +61,12 @@ export default function useAssets() {
             src: "/map/fireball.png",
             type: "magic",
         },
+        {
+            name: "Skeleton Mage",
+            id: "skel-mage",
+            src: "/map/skel-mage.png",
+            type: "char",
+        },
     ]
     function findAssetById(id) {
         return assets.find(o => o.id === id)

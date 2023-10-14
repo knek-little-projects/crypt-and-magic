@@ -43,9 +43,12 @@ export default function MapPlayer() {
     const mapSize = 10
 
     const data = useMapData()
-    const player = {
-        cell: data.layers.find(CHARACTERS, id => id !== null)
+    function getPlayer() {
+        return {
+            cell: data.layers.find(CHARACTERS, id => id === "wizard")
+        }
     }
+    const player = getPlayer()
 
     useEffect(() => {
         try {
@@ -93,7 +96,7 @@ export default function MapPlayer() {
             return true
         }
         const background = data.getItem(BACKGROUND, cell) || "grass"
-        return background !== "grass"
+        return background !== "grass" || data.getItem(CHARACTERS, cell)
     }
 
     function buildPathTo(cell) {
@@ -181,7 +184,6 @@ export default function MapPlayer() {
         magicButtons.push(
             <button
                 disabled={runEmulation}
-
                 key={key} onClick={onClick} style={style} className={className}>
                 <img style={{ width: "32px" }} src={src} />
                 {text}

@@ -35,9 +35,17 @@ export default function MapEditor() {
 
         const asset = findAssetById(brush.id)
 
-        if (asset.type === "char") {
+        if (asset.id === "wizard") {
             data.setLayers(data.layers.reset(CHARACTERS, center, asset.id))
-        } else {
+            return
+        }
+
+        if (asset.type === "char") {
+            data.setLayers(data.layers.updated(CHARACTERS, center, asset.id))
+            return
+        }
+
+        if (asset.type === "background") {
             const size = brush.size
             const cells = []
             for (let i = center.i - Math.floor(size / 2); i <= center.i + Math.floor(size / 2); i++) {
@@ -47,6 +55,7 @@ export default function MapEditor() {
             }
 
             data.setLayers(data.layers.updated(BACKGROUND, cells, brush.id))
+            return
         }
     }
 
@@ -83,6 +92,9 @@ export default function MapEditor() {
                 <div className="vr" />
                 <MapEditorBrushButton src="/map/wizard.png" onClick={() => setBrush({ id: "wizard", size: 1 })}>
                     Hero
+                </MapEditorBrushButton>
+                <MapEditorBrushButton src="/map/skel-mage.png" onClick={() => setBrush({ id: "skel-mage", size: 1 })}>
+                    Enemy
                 </MapEditorBrushButton>
             </div>
             <hr />
