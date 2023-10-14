@@ -4,6 +4,7 @@ import useMapData from "./map/data"
 import Map from "./Map"
 import findPath from "./map/find-path"
 import * as cellFuncs from "./map/cell-funcs"
+import useInterval from "./react-interval"
 
 
 function getArrowDirection(a, b) {
@@ -20,26 +21,6 @@ function getArrowDirection(a, b) {
     }
 }
 
-function useInterval(callback, delay) {
-    const savedCallback = useRef()
-
-    // Remember the latest callback.
-    useEffect(() => {
-        savedCallback.current = callback
-    }, [callback])
-
-    // Set up the interval.
-    useEffect(() => {
-        function tick() {
-            savedCallback.current()
-        }
-        if (delay) {
-            setTimeout(tick, 0)
-            let id = setInterval(tick, delay)
-            return () => clearInterval(id)
-        }
-    }, [delay])
-}
 
 
 export default function MapPlayer() {
