@@ -12,6 +12,7 @@ export default function Map({
     getItem,
     hoverSize = 1,
     hoverImageUrl = null,
+    hoverStyle = {},
     onBrush = () => { },
     onHover = () => { },
     onClick = () => { },
@@ -163,6 +164,7 @@ export default function Map({
                     width: cellWidth + 'px',
                     height: cellHeight + 'px',
                     backgroundColor: "rgba(100, 100, 100, 0.5)",
+                    ...hoverStyle,
                 }}
             >
                 {

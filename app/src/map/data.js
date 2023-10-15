@@ -104,6 +104,10 @@ export default function useMapData() {
             }
         }
 
+        empty() {
+            return this.mutate({})
+        }
+
         cleared(layer) {
             return this.map(layer, () => undefined)
         }

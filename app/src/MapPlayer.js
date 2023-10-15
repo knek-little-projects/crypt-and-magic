@@ -40,6 +40,7 @@ export default function MapPlayer() {
     const [delay, setDelay] = useState(0)
     const [casted, setCasted] = useState(null)
     const { assets } = useAssets()
+    const magicSpells = assets.filter(a => a.type === "magic").map(asset => new Spell({ asset, size: 1 }))
     const mapSize = 10
 
     const data = useMapData()
@@ -65,10 +66,12 @@ export default function MapPlayer() {
             return
         }
 
-        const currentMove = moves.shift()
+        const player = getPlayer()
+        const currentMove = moves.shift()  // dangerously anti react
         data.setLayers(data.layers
             .removed(PATHFINDER, currentMove)
-            .reset(CHARACTERS, currentMove, "wizard")
+            .removed(CHARACTERS, player.cell)
+            .updated(CHARACTERS, currentMove, "wizard")
         )
     }, delay)
 
@@ -132,9 +135,19 @@ export default function MapPlayer() {
             return
         }
 
+        if (data.getItem(CHARACTERS, cell)) {
+            if (magicSpells.length === 0) {
+                console.error("No spells")
+                return
+            }
+            data.setLayers(data.layers.reset(SPELLS, cell, magicSpells[0].asset.id))
+            setCasted({ cell, spell: magicSpells[0]})
+            setRunEmulation(true)
+            setSelectedSpell(null)
+        }
+
         if (moves.length > 0 && cellFuncs.eq(moves[moves.length - 1], cell)) {
             setRunEmulation(true)
-
             return
         }
 
@@ -172,7 +185,6 @@ export default function MapPlayer() {
     }
 
     const magicButtons = []
-    const magicSpells = assets.filter(a => a.type === "magic").map(asset => new Spell({ asset, size: 1 }))
     for (const spell of magicSpells) {
         const key = spell.asset.id + "_" + spell.size
         const onClick = () => switchSpell(spell)
@@ -212,7 +224,6 @@ export default function MapPlayer() {
                 hoverSize={hoverSize}
                 getItem={data.getItem}
                 onClick={onClick}
-
             />
         </>
     )

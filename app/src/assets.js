@@ -67,6 +67,12 @@ export default function useAssets() {
             src: "/map/skel-mage.png",
             type: "char",
         },
+        {
+            name: "Erasor",
+            id: "erasor",
+            src: "/map/erasor.png",
+            type: "editor",
+        },
     ]
     function findAssetById(id) {
         return assets.find(o => o.id === id)

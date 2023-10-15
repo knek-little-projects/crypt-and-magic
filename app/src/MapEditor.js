@@ -20,7 +20,7 @@ export default function MapEditor() {
     const { assets, getImageUrlById, findAssetById } = useAssets()
     const [brush, setBrush] = useState({ id: "grass", size: 1 })
     const [hoverImageUrl, setHoverImageUrl] = useState(null)
-    const mapSize = 10
+    const [hoverStyle, setHoverStyle] = useState({})
 
     const buttons = assets.filter(o => o.type === "background").map(o => (
         <MapEditorBrushButton src={o.src} key={o.id} onClick={() => setBrush({ id: o.id, size: 1 })}>
@@ -59,16 +59,40 @@ export default function MapEditor() {
         }
     }
 
-    function onHover(cell) {
-        if (cell) {
-            if (brush.id === data.getItem("background", cell)) {
-                setHoverImageUrl(null)
-            } else {
-                setHoverImageUrl(getImageUrlById(brush.id))
+    function getHoverStyleAndImage(cell) {
+        if (!cell) {
+            return {
+                style: {},
+                image: null,
             }
-        } else {
-            setHoverImageUrl(null)
         }
+
+        if (brush.id === "erasor") {
+            return {
+                image: null,
+                style: {
+                    backgroundColor: "rgba(255,255,255,0.75)"
+                }
+            }
+        }
+
+        if (brush.size === 1 && brush.id === data.getItem("background", cell)) {
+            return {
+                image: null,
+                style: {},
+            }
+        }
+
+        return {
+            style: {},
+            image: getImageUrlById(brush.id)
+        }
+    }
+
+    function onHover(cell) {
+        const { image, style } = getHoverStyleAndImage(cell)
+        setHoverImageUrl(image)
+        setHoverStyle(style)
     }
 
     useEffect(() => {
@@ -82,10 +106,10 @@ export default function MapEditor() {
     return (
         <div className='MapEditor'>
             <div className='brush-buttons'>
-                <MapEditorBrushButton src="/map/erasor.png" onClick={() => setBrush({ id: "grass", size: 1 })}>
+                <MapEditorBrushButton src="/map/erasor.png" onClick={() => setBrush({ id: "erasor", size: 1 })}>
                     Erase 1x1
                 </MapEditorBrushButton>
-                <MapEditorBrushButton src="/map/erasor.png" onClick={() => setBrush({ id: "grass", size: 3 })}>
+                <MapEditorBrushButton src="/map/erasor.png" onClick={() => setBrush({ id: "erasor", size: 3 })}>
                     Erase 3x3
                 </MapEditorBrushButton>
                 {buttons}
@@ -104,10 +128,12 @@ export default function MapEditor() {
                 onHover={onHover}
                 hoverSize={brush.size}
                 hoverImageUrl={hoverImageUrl}
+                hoverStyle={hoverStyle}
             />
             <hr />
             <button onClick={() => data.saveToLocalStorage()}>SAVE</button>
             <button onClick={() => data.reactLoadFromLocalStorage()}>LOAD</button>
+            <button onClick={() => data.setLayers(data.layers.empty())}>CLEAR</button>
         </div>
     );
 }
