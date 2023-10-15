@@ -45,9 +45,7 @@ export default function MapPlayer() {
 
     const data = useMapData()
     function getPlayer() {
-        return {
-            cell: data.layers.find(CHARACTERS, id => id === "wizard")
-        }
+        return data.chars.find(char => char.asset.id === "wizard")
     }
     const player = getPlayer()
 
@@ -73,22 +71,19 @@ export default function MapPlayer() {
         }
     }
 
-    function getMovesForSkeletons(additonalObstacle) {
-        const cells = data.layers.findAll(CHARACTERS, id => id && getAssetById(id).set === "skeletons")
-        const oldCells = []
-        const newCells = []
-        for (const cell of cells) {
-            const nextCell = cellRight(cell)
+    function getUpdatedSkeletons(additonalObstacle) {
+        const skeletons = data.chars.filter(char => char.asset.set === "skeletons")
+        for (const skel of skeletons) {
+            const nextCell = cellRight(skel.cell)
             if (isObstacle(nextCell)) {
                 continue
             }
             if (cellFuncs.eq(nextCell, additonalObstacle)) {
                 continue
             }
-            oldCells.push(cell)
-            newCells.push(nextCell)
+            skel.cell = nextCell
         }
-        return [oldCells, newCells]
+        return skeletons
     }
 
     useInterval(() => {
@@ -105,14 +100,10 @@ export default function MapPlayer() {
             return
         }
 
-        const [oldCells, newCells] = getMovesForSkeletons(currentMove)
-        data.setLayers(data.layers
-            .removed(PATHFINDER, currentMove)
-            .removed(CHARACTERS, player.cell)
-            .updated(CHARACTERS, currentMove, "wizard")
-            .updated(CHARACTERS, oldCells, undefined)
-            .updated(CHARACTERS, newCells, "skel-mage")
-        )
+        const skels = getUpdatedSkeletons(currentMove)
+        player.cell = currentMove;
+        data.setLayers(data.layers.removed(PATHFINDER, currentMove))
+        data.setChars([player, ...skels])
     }, delay)
 
     useEffect(() => {
@@ -169,7 +160,7 @@ export default function MapPlayer() {
     }
 
     const onClick = cell => {
-        if (!player.cell) {
+        if (!player || !player.cell) {
             return
         }
 

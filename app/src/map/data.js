@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { CHARACTERS } from './layer-types';
+import * as cellFuncs from "./cell-funcs"
 
 
 export default function useMapData() {
@@ -147,22 +149,42 @@ export default function useMapData() {
         }
     }
 
+    const [chars, setChars] = useState([])
     const [layers, setLayers] = useState(new Layers())
     window.$layers = layers
 
+    useEffect(() => {
+        const cells = []
+        const ids = []
+        for (const c of chars) {
+            cells.push(c.cell)
+            ids.push(c.asset.id)
+        }
+        setLayers(layers.cleared(CHARACTERS).withManyUpdatedByMany(CHARACTERS, cells, ids))
+    }, [chars])
+
     function reactLoadFromLocalStorage() {
-        const { layers } = JSON.parse(localStorage.getItem("map"))
+        const { layers, chars } = JSON.parse(localStorage.getItem("map"))
         setLayers(new Layers(layers))
+        if (chars) {
+            setChars(chars)
+        }
     }
 
     function saveToLocalStorage() {
         localStorage.setItem("map", JSON.stringify({
-            layers: layers.raw()
+            layers: layers.raw(),
+            chars,
         }))
     }
+
     return {
-        getItem: (layer, cell) => layers.getItem(layer, cell),
+        getItem: (layer, cell) => {
+            return layers.getItem(layer, cell)
+        },
         layers,
+        chars,
+        setChars,
         setLayers,
         reactLoadFromLocalStorage,
         saveToLocalStorage,

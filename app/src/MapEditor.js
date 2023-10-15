@@ -5,6 +5,7 @@ import "./App.scss"
 import useMapData from './map/data';
 import Map from "./Map"
 import { BACKGROUND, CHARACTERS } from './map/layer-types';
+import * as cellFuncs from "./map/cell-funcs"
 
 function MapEditorBrushButton({ src, onClick, children }) {
     return (
@@ -48,16 +49,33 @@ export default function MapEditor() {
 
         if (asset.id === "erasor") {
             data.setLayers(data.layers.removed([BACKGROUND, CHARACTERS], cells))
+            data.setChars(data.chars.filter(char => cells.find(cell => !cellFuncs.eq(cell, char.cell))))
             return
         }
 
         if (asset.id === "wizard") {
-            data.setLayers(data.layers.reset(CHARACTERS, cells, asset.id))
+            let player = {
+                cell: center,
+                health: 100,
+                asset,
+            }
+
+            const oldPlayer = data.chars.find(char => char.asset.id === asset.id)
+            if (oldPlayer) {
+                player = { ...oldPlayer, cell: center }
+            }
+
+            data.setChars([...data.chars.filter(c => c.asset.id !== asset.id), player])
             return
         }
 
         if (asset.type === CHARACTERS) {
-            data.setLayers(data.layers.updated(CHARACTERS, cells, asset.id))
+            const skeleton = {
+                asset,
+                health: 100,
+                cell: center,
+            }
+            data.setChars([...data.chars, skeleton])
             return
         }
 
