@@ -95,6 +95,19 @@ export default function useMapData() {
             }
         }
 
+        findAll(layer, fn) {
+            const result = []
+            for (const key in this._data) {
+                const [_layer, cell] = keySplit(key)
+                if (layer == _layer) {
+                    if (fn(this._data[key])) {
+                        result.push(cell)
+                    }
+                }
+            }
+            return result
+        }
+
         updated(layer, what, how) {
             if (typeof what === "function") {
                 return this.map(layer, what)

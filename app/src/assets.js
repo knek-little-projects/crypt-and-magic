@@ -1,4 +1,4 @@
-import { BACKGROUND } from "./map/layer-types"
+import { BACKGROUND, CHARACTERS } from "./map/layer-types"
 
 export default function useAssets() {
     const assets = [
@@ -20,7 +20,7 @@ export default function useAssets() {
             name: "wizard",
             id: "wizard",
             src: "/map/wizard.png",
-            type: "char",
+            type: CHARACTERS,
             isObstacle: true,
         },
         {
@@ -69,7 +69,8 @@ export default function useAssets() {
             name: "Skeleton Mage",
             id: "skel-mage",
             src: "/map/skel-mage.png",
-            type: "char",
+            type: CHARACTERS,
+            set: "skeletons",
             isObstacle: true,
         },
         {

@@ -59,6 +59,38 @@ export default function MapPlayer() {
         }
     }, [])
 
+    function cellRight({ i, j }) {
+        return {
+            i: i + 1,
+            j,
+        }
+    }
+
+    function cellLeft({ i, j }) {
+        return {
+            i: i - 1,
+            j
+        }
+    }
+
+    function getMovesForSkeletons(additonalObstacle) {
+        const cells = data.layers.findAll(CHARACTERS, id => id && getAssetById(id).set === "skeletons")
+        const oldCells = []
+        const newCells = []
+        for (const cell of cells) {
+            const nextCell = cellRight(cell)
+            if (isObstacle(nextCell)) {
+                continue
+            }
+            if (cellFuncs.eq(nextCell, additonalObstacle)) {
+                continue
+            }
+            oldCells.push(cell)
+            newCells.push(nextCell)
+        }
+        return [oldCells, newCells]
+    }
+
     useInterval(() => {
         if (moves.length === 0) {
             setDelay(0)
@@ -68,10 +100,18 @@ export default function MapPlayer() {
 
         const player = getPlayer()
         const currentMove = moves.shift()  // dangerously anti react
+        if (isObstacle(currentMove)) {
+            while (moves.shift()) {};
+            return
+        }
+
+        const [oldCells, newCells] = getMovesForSkeletons(currentMove)
         data.setLayers(data.layers
             .removed(PATHFINDER, currentMove)
             .removed(CHARACTERS, player.cell)
             .updated(CHARACTERS, currentMove, "wizard")
+            .updated(CHARACTERS, oldCells, undefined)
+            .updated(CHARACTERS, newCells, "skel-mage")
         )
     }, delay)
 
@@ -147,7 +187,7 @@ export default function MapPlayer() {
                 return
             }
             data.setLayers(data.layers.reset(SPELLS, cell, magicSpells[0].asset.id))
-            setCasted({ cell, spell: magicSpells[0]})
+            setCasted({ cell, spell: magicSpells[0] })
             setRunEmulation(true)
             setSelectedSpell(null)
         }

@@ -56,7 +56,7 @@ export default function MapEditor() {
             return
         }
 
-        if (asset.type === "char") {
+        if (asset.type === CHARACTERS) {
             data.setLayers(data.layers.updated(CHARACTERS, cells, asset.id))
             return
         }
