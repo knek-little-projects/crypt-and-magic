@@ -39,7 +39,7 @@ export default function MapPlayer() {
     const [moves, setMoves] = useState([])
     const [delay, setDelay] = useState(0)
     const [casted, setCasted] = useState(null)
-    const { assets } = useAssets()
+    const { assets, getAssetById } = useAssets()
     const magicSpells = assets.filter(a => a.type === "magic").map(asset => new Spell({ asset, size: 1 }))
     const mapSize = 10
 
@@ -98,8 +98,14 @@ export default function MapPlayer() {
         if (cellFuncs.isOutsideOfMap(cell, mapSize)) {
             return true
         }
-        const background = data.getItem(BACKGROUND, cell) || "grass"
-        return background !== "grass" || data.getItem(CHARACTERS, cell)
+
+        const hasObstacle = [BACKGROUND, CHARACTERS]
+            .map(layer => data.getItem(layer, cell))
+            .filter(id => id)
+            .map(id => getAssetById(id))
+            .some(asset => asset.isObstacle);
+
+        return hasObstacle
     }
 
     function buildPathTo(cell) {

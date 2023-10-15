@@ -28,32 +28,39 @@ export default function MapEditor() {
         </MapEditorBrushButton>
     ))
 
+    function getCellsAround(center, size) {
+        const cells = []
+        for (let i = center.i - Math.floor(size / 2); i <= center.i + Math.floor(size / 2); i++) {
+            for (let j = center.j - Math.floor(size / 2); j <= center.j + Math.floor(size / 2); j++) {
+                cells.push({ i, j })
+            }
+        }
+        return cells
+    }
+
     function onBrush(center) {
         if (brush === null) {
             return
         }
 
         const asset = findAssetById(brush.id)
+        const cells = getCellsAround(center, brush.size)
+
+        if (asset.id === "erasor") {
+            data.setLayers(data.layers.removed([BACKGROUND, CHARACTERS], cells))
+        }
 
         if (asset.id === "wizard") {
-            data.setLayers(data.layers.reset(CHARACTERS, center, asset.id))
+            data.setLayers(data.layers.reset(CHARACTERS, cells, asset.id))
             return
         }
 
         if (asset.type === "char") {
-            data.setLayers(data.layers.updated(CHARACTERS, center, asset.id))
+            data.setLayers(data.layers.updated(CHARACTERS, cells, asset.id))
             return
         }
 
         if (asset.type === "background") {
-            const size = brush.size
-            const cells = []
-            for (let i = center.i - Math.floor(size / 2); i <= center.i + Math.floor(size / 2); i++) {
-                for (let j = center.j - Math.floor(size / 2); j <= center.j + Math.floor(size / 2); j++) {
-                    cells.push({ i, j })
-                }
-            }
-
             data.setLayers(data.layers.updated(BACKGROUND, cells, brush.id))
             return
         }

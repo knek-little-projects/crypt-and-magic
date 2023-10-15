@@ -6,18 +6,21 @@ export default function useAssets() {
             id: "grass",
             src: "/map/grass.png",
             type: "background",
+            isObstacle: false,
         },
         {
             name: "water",
             id: "water",
             src: "/map/water.png",
             type: "background",
+            isObstacle: true,
         },
         {
             name: "wizard",
             id: "wizard",
             src: "/map/wizard.png",
             type: "char",
+            isObstacle: true,
         },
         {
             name: "arrow",
@@ -66,6 +69,7 @@ export default function useAssets() {
             id: "skel-mage",
             src: "/map/skel-mage.png",
             type: "char",
+            isObstacle: true,
         },
         {
             name: "Erasor",

@@ -25,6 +25,9 @@ export default function useMapData() {
         }
 
         mutate(data) {
+            if (!data) {
+                throw Error()
+            }
             return new Layers(data)
         }
 
@@ -113,6 +116,13 @@ export default function useMapData() {
         }
 
         removed(layer, what) {
+            if (layer instanceof Array) {
+                let result = this
+                for (const l of layer) {
+                    result = result.removed(l, what)
+                }
+                return result
+            }
             if (what === undefined) {
                 return this.cleared()
             }
