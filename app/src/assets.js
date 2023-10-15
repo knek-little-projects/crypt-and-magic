@@ -1,3 +1,4 @@
+import { BACKGROUND } from "./map/layer-types"
 
 export default function useAssets() {
     const assets = [
@@ -5,14 +6,14 @@ export default function useAssets() {
             name: "grass",
             id: "grass",
             src: "/map/grass.png",
-            type: "background",
+            type: BACKGROUND,
             isObstacle: false,
         },
         {
             name: "water",
             id: "water",
             src: "/map/water.png",
-            type: "background",
+            type: BACKGROUND,
             isObstacle: true,
         },
         {

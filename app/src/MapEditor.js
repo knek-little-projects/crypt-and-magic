@@ -48,6 +48,7 @@ export default function MapEditor() {
 
         if (asset.id === "erasor") {
             data.setLayers(data.layers.removed([BACKGROUND, CHARACTERS], cells))
+            return
         }
 
         if (asset.id === "wizard") {
@@ -60,7 +61,7 @@ export default function MapEditor() {
             return
         }
 
-        if (asset.type === "background") {
+        if (asset.type === BACKGROUND) {
             data.setLayers(data.layers.updated(BACKGROUND, cells, brush.id))
             return
         }
