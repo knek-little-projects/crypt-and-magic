@@ -79,6 +79,12 @@ export default function useAssets() {
             src: "/map/erasor.png",
             type: "editor",
         },
+        {
+            name: "Skeleton Sword",
+            id: "skel-sword",
+            src: "/map/skel-sword.png",
+            type: "magic",
+        },
     ]
     function findAssetById(id) {
         return assets.find(o => o.id === id)

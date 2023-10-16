@@ -74,7 +74,15 @@ export default function MapPlayer() {
     function getUpdatedSkeletons(additonalObstacle) {
         const skeletons = data.chars.filter(char => char.asset.set === "skeletons")
         for (const skel of skeletons) {
-            const nextCell = cellRight(skel.cell)
+            if (skel.movement === undefined) {
+                skel.movement = +1
+            }
+            const { i, j } = skel.cell;
+            let nextCell = { i: i + skel.movement, j }
+            if (isObstacle(nextCell) && !cellFuncs.eq(player.cell, nextCell)) {
+                skel.movement = -skel.movement
+                nextCell = { i: i + skel.movement, j }
+            }
             if (isObstacle(nextCell)) {
                 continue
             }
@@ -96,15 +104,35 @@ export default function MapPlayer() {
         const player = getPlayer()
         const currentMove = moves.shift()  // dangerously anti react
         if (isObstacle(currentMove)) {
-            while (moves.shift()) {};
+            while (moves.shift()) { };
             return
         }
 
         const skels = getUpdatedSkeletons(currentMove)
         player.cell = currentMove;
-        data.setLayers(data.layers.removed(PATHFINDER, currentMove))
+
+        let swordAttack = false
+        {
+            const player = getPlayer()
+            for (const skel of data.chars.filter(char => char.asset.set === "skeletons")) {
+                if (isAround(skel.cell, player.cell)) {
+                    swordAttack = true
+                    break
+                }
+            }
+        }
+
+        let layers = data.layers.removed(PATHFINDER, currentMove)
+        if (swordAttack) {
+            layers = layers.updated(SPELLS, player.cell, "skel-sword")
+        }
+        data.setLayers(layers)
         data.setChars([player, ...skels])
     }, delay)
+
+    function isAround(a, b) {
+        return Math.abs(a.i - b.i) <= 1 && Math.abs(a.j - b.j) <= 1
+    }
 
     useEffect(() => {
         if (!runEmulation) {
@@ -113,6 +141,7 @@ export default function MapPlayer() {
 
         if (casted) {
             setTimeout(() => {
+                data.setChars(data.chars.filter(char => !cellFuncs.eq(char.cell, casted.cell)))
                 data.setLayers(data.layers.cleared(SPELLS))
                 setRunEmulation(false)
                 setCasted(null)
@@ -228,7 +257,7 @@ export default function MapPlayer() {
         const src = spell.asset.src
         const style = {}
         // const style = selectedSpell && selectedSpell.id === spell.id && { border: "4px solid blue" } || { border: "4px solid #999" }
-        const className = selectedSpell && selectedSpell.id === spell.id && "animate-border"
+        const className = selectedSpell && selectedSpell.id === spell.id && "animate-border" || ""
         const text = spell.asset.name
         magicButtons.push(
             <button
