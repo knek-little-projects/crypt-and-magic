@@ -14,6 +14,7 @@ function Cell({
     cellSize,
     children,
     style,
+    image,
     className,
 }) {
     const style_ = {
@@ -29,6 +30,7 @@ function Cell({
             className={className_}
             style={style_}
         >
+            {image && <img src={image} draggable={false} />}
             {children}
         </div>
     )
@@ -65,91 +67,59 @@ export default function Map({
 
     const { getImageUrlById } = useAssets()
 
+    function* getItems(cell) {
+        if (cellFuncs.isOutsideOfMap(cell, mapSize)) {
+            yield { style: { background: "black" } }
+            return
+        }
+        {
+            const assetId = getItem(BACKGROUND, cell) || "grass"
+            const image = getImageUrlById(assetId)
+            yield { image }
+
+            const children = (
+                <div className='debug coordinates'>
+                    {cell.i},{cell.j},{assetId}
+                </div>
+            )
+            yield { children }
+        }
+        {
+            const assetId = getItem(CHARACTERS, cell)
+            if (assetId) {
+                const image = getImageUrlById(assetId)
+                yield { image }
+            }
+        }
+        {
+            const assetId = getItem(SPELLS, cell)
+            if (assetId) {
+                yield {
+                    className: 'opacityAnimation',
+                    style: {
+                        opacity: "0.75",
+                    },
+                    image: getImageUrlById(assetId),
+                }
+            }
+        }
+        {
+            const arrowDescription = getItem(PATHFINDER, cell)
+            if (arrowDescription) {
+                yield { children: <Step description={arrowDescription} /> }
+            }
+        }
+    }
+
     for (let i = -1; i < width / cellSize; i++) {
         for (let j = -1; j < height / cellSize; j++) {
             const absCell = grid.getAbsCellByScreenCell({ i, j });
             const { x, y } = grid.getOffsetedScreenCellPointByScreenCell({ i, j })
 
-            if (cellFuncs.isOutsideOfMap(absCell, mapSize)) {
-                cells.push(
-                    <Cell
-                        key={`cell_${i}_${j}`}
-                        x={x}
-                        y={y}
-                        cellSize={cellSize}
-                        style={{
-                            background: "black"
-                        }}
-                    />
-                )
-                continue;
-            }
-
-            const backgroundId = getItem(BACKGROUND, absCell) || "grass"
-            cells.push(
-                <Cell
-                    key={`cell_${i}_${j}`}
-                    cellSize={cellSize}
-                    x={x}
-                    y={y}
-                    style={{
-                        backgroundImage: "url('" + getImageUrlById(backgroundId) + "')",
-                    }}
-                >
-                    {
-                        displayIJ
-                        &&
-                        <div className='debug coordinates'>
-                            {absCell.i},{absCell.j},{backgroundId}
-                        </div>
-                    }
-                </Cell>
-            )
-
-            const foregroundId = getItem(CHARACTERS, absCell)
-            if (foregroundId) {
-                cells.push(
-                    <Cell
-                        x={x}
-                        y={y}
-                        cellSize={cellSize}
-                        style={{
-                            backgroundImage: "url('" + getImageUrlById(foregroundId) + "')",
-                        }}
-                    />
-                )
-            }
-
-            const spellId = getItem(SPELLS, absCell)
-            if (spellId) {
-                cells.push(
-                    <Cell
-                        key={`cell_planspell_${i}_${j}`}
-                        className='opacityAnimation'
-                        x={x}
-                        y={y}
-                        cellSize={cellSize}
-                        style={{
-                            opacity: "0.75",
-                        }}
-                    >
-                        <img src={getImageUrlById(spellId)} draggable={false} />
-                    </Cell>
-                )
-            }
-
-            const arrowDescription = getItem(PATHFINDER, absCell)
-            if (arrowDescription) {
-                cells.push(
-                    <Cell
-                        key={`cell_arrow_${i}_${j}`}
-                        x={x}
-                        y={y}
-                        cellSize={cellSize}
-                    >
-                        <Step description={arrowDescription} />
-                    </Cell>
-                )
+            let index = 0
+            for (const item of getItems(absCell)) {
+                const key = `cell_${i}_${j}_${index++}`
+                cells.push(<Cell x={x} y={y} cellSize={cellSize} key={key} {...item} />)
             }
         }
     }
