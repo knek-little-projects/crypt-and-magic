@@ -113,7 +113,7 @@ export default function MapPlayer() {
             map.addSpell({
                 id: uuidv4(),
                 asset: getAssetById("skel-sword"),
-                cell: player.cell,
+                targetId: player.id,
             })
         }
 
@@ -183,6 +183,9 @@ export default function MapPlayer() {
 
         const chars = data.map.getCharsAt(cell)
         if (chars.length > 0) {
+            if (chars.length > 1) {
+                throw Error(`not implemented yet`)
+            }
             if (magicSpells.length === 0) {
                 console.error("No spells")
                 return
@@ -191,12 +194,13 @@ export default function MapPlayer() {
             data.map.addSpell({
                 id: uuidv4(),
                 asset: magicSpells[0].asset,
-                cell,
+                targetId: chars[0].id,
             })
             data.commit()
             setCasted({ cell, spell: magicSpells[0] })
             setRunEmulation(true)
             setSelectedSpell(null)
+            return
         }
 
         if (moves.length > 0 && cellFuncs.eq(moves[moves.length - 1], cell)) {

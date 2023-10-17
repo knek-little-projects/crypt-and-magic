@@ -37,31 +37,24 @@ export default function useMapData() {
 
         addSpell(spell) {
             this._data.spells[spell.id] = spell
+        }
 
-            const k = key(spell.cell)
-            const map = this._data.spellMap
-            if (!map[k]) {
-                map[k] = []
+        getSpellCell({ cell, targetId }) {
+            if (cell) {
+                return cell
             }
-            map[k].push(spell)
+            if (targetId) {
+                return this.getChar(targetId).cell
+            }
+            throw Error(`cannot determine spell cell`)
         }
 
         removeSpell(spell) {
-            const k = key(spell.cell)
-            const map = this._data.spellMap
-            if (map[k]) {
-                map[k] = map[k].filter(otherSpell => otherSpell.id !== spell.id)
-            }
-            if (map[k].length === 0) {
-                delete map[k]
-            }
             delete this._data.spells[spell.id]
         }
 
         getSpellsAt(cell) {
-            const k = key(cell)
-            const map = this._data.spellMap
-            return map[k] || []
+            return this.getSpells().filter(spell => cellFuncs.eq(cell, this.getSpellCell(spell)))
         }
 
         getSpells() {
@@ -69,7 +62,7 @@ export default function useMapData() {
         }
 
         clearSpells() {
-            this.getSpells().forEach(spell => this.removeSpell(spell))
+            this._data.spells = {}
         }
 
         getBackgroundAt(cell) {
@@ -115,7 +108,15 @@ export default function useMapData() {
         }
 
         findChar(id) {
-            return this.getChars().find(char => char.asset.id === id)
+            return this.getChars().find(char => char.id === id)
+        }
+
+        getChar(id) {
+            const char = this.findChar(id)
+            if (!char) {
+                throw Error(`char id '${id}' not found`)
+            }
+            return char
         }
 
         addChar(char) {
