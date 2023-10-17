@@ -256,7 +256,6 @@ export default function MapPlayer() {
         const onClick = () => switchSpell(spell)
         const src = spell.asset.src
         const style = {}
-        // const style = selectedSpell && selectedSpell.id === spell.id && { border: "4px solid blue" } || { border: "4px solid #999" }
         const className = selectedSpell && selectedSpell.id === spell.id && "animate-border" || ""
         const text = spell.asset.name
         magicButtons.push(
@@ -288,7 +287,7 @@ export default function MapPlayer() {
             <Map
                 hoverImageUrl={hoverImageUrl}
                 hoverSize={hoverSize}
-                getItem={data.getItem}
+                getItems={data.getItems}
                 onClick={onClick}
             />
         </>

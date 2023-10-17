@@ -149,7 +149,7 @@ export default function MapEditor() {
             </div>
             <hr />
             <Map
-                getItem={data.getItem}
+                getItems={data.getItems}
                 onBrush={onBrush}
                 onHover={onHover}
                 hoverSize={brush.size}

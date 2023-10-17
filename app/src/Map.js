@@ -4,9 +4,6 @@ import "./App.scss"
 import useGridHover from './gridhover';
 import useDragOffset from './dragoffset';
 import useGrid from './grid';
-import { BACKGROUND, CHARACTERS, PATHFINDER, SPELLS } from './map/layer-types';
-import Step from "./map/step"
-import * as cellFuncs from "./map/cell-funcs"
 
 function Cell({
     x,
@@ -37,7 +34,7 @@ function Cell({
 }
 
 export default function Map({
-    getItem,
+    getItems,
     hoverSize = 1,
     hoverImageUrl = null,
     hoverStyle = {},
@@ -53,7 +50,6 @@ export default function Map({
 
     const width = 500
     const height = 500
-    const displayIJ = true
 
     const ref = useRef()
     const { hoverAbsCell, onGridHover, onGridLeave } = useGridHover(grid, ref)
@@ -64,52 +60,6 @@ export default function Map({
     })
 
     const cells = []
-
-    const { getImageUrlById } = useAssets()
-
-    function* getItems(cell) {
-        if (cellFuncs.isOutsideOfMap(cell, mapSize)) {
-            yield { style: { background: "black" } }
-            return
-        }
-        {
-            const assetId = getItem(BACKGROUND, cell) || "grass"
-            const image = getImageUrlById(assetId)
-            yield { image }
-
-            const children = (
-                <div className='debug coordinates'>
-                    {cell.i},{cell.j},{assetId}
-                </div>
-            )
-            yield { children }
-        }
-        {
-            const assetId = getItem(CHARACTERS, cell)
-            if (assetId) {
-                const image = getImageUrlById(assetId)
-                yield { image }
-            }
-        }
-        {
-            const assetId = getItem(SPELLS, cell)
-            if (assetId) {
-                yield {
-                    className: 'opacityAnimation',
-                    style: {
-                        opacity: "0.75",
-                    },
-                    image: getImageUrlById(assetId),
-                }
-            }
-        }
-        {
-            const arrowDescription = getItem(PATHFINDER, cell)
-            if (arrowDescription) {
-                yield { children: <Step description={arrowDescription} /> }
-            }
-        }
-    }
 
     for (let i = -1; i < width / cellSize; i++) {
         for (let j = -1; j < height / cellSize; j++) {
