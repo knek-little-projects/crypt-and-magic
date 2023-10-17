@@ -39,14 +39,25 @@ export default function useMapData() {
             this._data.spells[spell.id] = spell
         }
 
-        getSpellCell({ cell, targetId }) {
+        getCharsAtSpell(spell) {
+            const cell = this.findSpellCell(spell)
+            if (cell) {
+                return this.getCharsAt(cell)
+            } else {
+                return []
+            }
+        }
+
+        findSpellCell({ cell, targetId }) {
             if (cell) {
                 return cell
             }
             if (targetId) {
-                return this.getChar(targetId).cell
+                const char = this.findChar(targetId)
+                if (char) {
+                    return char.cell
+                }
             }
-            throw Error(`cannot determine spell cell`)
         }
 
         removeSpell(spell) {
@@ -54,7 +65,10 @@ export default function useMapData() {
         }
 
         getSpellsAt(cell) {
-            return this.getSpells().filter(spell => cellFuncs.eq(cell, this.getSpellCell(spell)))
+            return this.getSpells().filter(spell => {
+                const spellCell = this.findSpellCell(spell)
+                return spellCell && cellFuncs.eq(cell, spellCell)
+            })
         }
 
         getSpells() {

@@ -1,8 +1,8 @@
 - [x] move magic and pathfinder out of layers to a separate state
 - [x] perhaps replace background layers with a simple 1d-array (i+nj)
 - [x] spells autohit character, not empty cell
+- [x] skeletons and player loose health on attacks and die if health < 0
 
-- [ ] skeletons and player loose health on attacks and die if health < 0
 - [ ] display player icon, health and magic on a side panel
 - [ ] display any char icon, health and magic on a side panel on hover on map
 - [ ] allow multiple players on map, select yours via combobox

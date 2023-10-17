@@ -115,9 +115,12 @@ export default function MapPlayer() {
                 asset: getAssetById("skel-sword"),
                 targetId: player.id,
             })
+            player.health -= 25
         }
 
         map.replaceChar(player)
+
+        data.map.getChars().filter(char => char.health <= 0).forEach(char => data.map.removeChar(char))
         data.commit()
     }, delay)
 
@@ -132,6 +135,8 @@ export default function MapPlayer() {
 
         if (casted) {
             setTimeout(() => {
+                data.map.getSpells().forEach(spell => data.map.getCharsAtSpell(spell).forEach(char => char.health -= 40))
+                data.map.getChars().filter(char => char.health <= 0).forEach(char => data.map.removeChar(char))
                 data.map.clearSpells()
                 data.commit()
                 setRunEmulation(false)
