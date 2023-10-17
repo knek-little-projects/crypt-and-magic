@@ -4,36 +4,97 @@ import * as cellFuncs from "./cell-funcs"
 import Step from './step'
 import useAssets from '../assets';
 
-function key(layer, { i, j }) {
-    return layer + " " + i + " " + j
+function key({ i, j }) {
+    return i + " " + j
 }
-
-function isLayerInKey(layer, key) {
-    return String(layer) === key.split(" ")[0]
-}
-
-function keySplit(key) {
-    const [layer, i, j] = key.split(" ")
-    return [layer, { i: parseInt(i), j: parseInt(j) }]
-}
-
 
 export default function useMapData() {
 
     const { getImageUrlById, getAssetById } = useAssets()
     const mapSize = 10
+    const defaultBackgroundId = "grass"
 
     class Layers {
         constructor(data) {
             this._data = data || {}
-            this._defaultBackgroundId = "grass"
+            if (!this._data.background) {
+                this._data.background = {}
+            }
             if (!this._data.chars) {
                 this._data.chars = {}
             }
+            if (!this._data.steps) {
+                this._data.steps = {}
+            }
+            if (!this._data.spells) {
+                this._data.spells = {}
+                this._data.spellMap = {}
+            }
+        }
+
+        addSpell(spell) {
+            this._data.spells[spell.id] = spell
+
+            const k = key(spell.cell)
+            const map = this._data.spellMap
+            if (!map[k]) {
+                map[k] = []
+            }
+            map[k].push(spell)
+        }
+
+        removeSpell(spell) {
+            const k = key(spell.cell)
+            const map = this._data.spellMap
+            if (map[k]) {
+                map[k] = map[k].filter(otherSpell => otherSpell.id !== spell.id)
+            }
+            if (map[k].length === 0) {
+                delete map[k]
+            }
+            delete this._data.spells[spell.id]
+        }
+
+        getSpellsAt(cell) {
+            const k = key(cell)
+            const map = this._data.spellMap
+            return map[k] || []            
+        }
+
+        getSpells() {
+            return Object.values(this._data.spells)
+        }
+
+        clearSpells() {
+            this.getSpells().forEach(spell => this.removeSpell(spell))
         }
 
         getBackgroundAt(cell) {
             return { asset: getAssetById(this._getBackgroundId(cell)) }
+        }
+
+        setBackgroundIdAt(cell, assetId) {
+            this._data.background[key(cell)] = assetId
+        }
+
+        getStepAt(cell) {
+            return this._data.steps[key(cell)]
+        }
+
+        setStepAt(cell, step) {
+            this._data.steps[key(cell)] = step
+        }
+
+        removeStepAt(cell) {
+            delete this._data.steps[key(cell)]
+        }
+
+        setSteps(cells, values) {
+            const steps = {}
+            for (let i = 0; i < cells.length; i++) {
+                steps[key(cells[i])] = values[i]
+            }
+            this._data.steps = steps
         }
 
         getCharsAt(cell) {
@@ -66,12 +127,12 @@ export default function useMapData() {
             this._data.chars[char.id] = char
         }
 
-        _getBackgroundId(cell) {
-            return this._get(BACKGROUND, cell, this._defaultBackgroundId)
+        removeChar({ id }) {
+            delete this._data.chars[id]
         }
 
-        _get(layer, cell, defaultValue) {
-            return this._data[key(layer, cell)] || defaultValue
+        _getBackgroundId(cell) {
+            return this._data.background[key(cell)] || defaultBackgroundId
         }
 
         hasObstacle(cell) {
@@ -79,143 +140,30 @@ export default function useMapData() {
                 return true
             }
 
-            const hasObstacle = [BACKGROUND, CHARACTERS]
-                .map(layer => this._get(layer, cell))
-                .filter(id => id)
-                .map(id => getAssetById(id))
-                .some(asset => asset.isObstacle);
-
-            return hasObstacle
-        }
-
-        getItem(layer, cell) {
-            return this._data[key(layer, cell)]
-        }
-
-        mutate(data) {
-            if (!data) {
-                return new Layers({ ...this._data })
+            const background = this.getBackgroundAt(cell)
+            if (background.asset.isObstacle) {
+                return true
             }
-            return new Layers(data)
-        }
 
-        withManyUpdatedBySignelValue(layer, cells, value) {
-            const updates = {}
-            for (const cell of cells) {
-                updates[key(layer, cell)] = value
+            const chars = this.getCharsAt(cell)
+            if (chars.length > 0) {
+                return true
             }
-            return this.mutate({
-                ...this._data,
-                ...updates,
-            })
+
+            return false
         }
 
-        withManyUpdatedByMany(layer, cells, values) {
-            const updates = {}
-            for (let i = 0; i < cells.length; i++) {
-                updates[key(layer, cells[i])] = values[i]
-            }
-            return this.mutate({
-                ...this._data,
-                ...updates,
-            })
-        }
-
-        withManyUpdated(layer, cells, what) {
-            if (what instanceof Array) {
-                return this.withManyUpdatedByMany(layer, cells, what)
-            } else {
-                return this.withManyUpdatedBySignelValue(layer, cells, what)
-            }
-        }
-
-        withOneUpdated(layer, cell, value) {
-            return this.withManyUpdated(layer, [cell], value)
+        mutate() {
+            return new Layers({ ...this._data })
         }
 
         raw() {
             return { ...this._data }
         }
 
-        copy() {
-            return this.mutate(this._data)
-        }
-
-        map(layer, fn) {
-            const copy = {}
-            for (const key in this._data) {
-                if (isLayerInKey(layer, key)) {
-                    const val = fn(this._data[key])
-                    if (val) {
-                        copy[key] = val
-                    }
-                } else {
-                    copy[key] = this._data[key]
-                }
-            }
-            return this.mutate(copy)
-        }
-
-        find(layer, fn) {
-            for (const key in this._data) {
-                const [_layer, cell] = keySplit(key)
-                if (layer == _layer) {
-                    if (fn(this._data[key])) {
-                        return cell
-                    }
-                }
-            }
-        }
-
-        findAll(layer, fn) {
-            const result = []
-            for (const key in this._data) {
-                const [_layer, cell] = keySplit(key)
-                if (layer == _layer) {
-                    if (fn(this._data[key])) {
-                        result.push(cell)
-                    }
-                }
-            }
-            return result
-        }
-
-        updated(layer, what, how) {
-            if (typeof what === "function") {
-                return this.map(layer, what)
-            } else if (what instanceof Array) {
-                return this.withManyUpdated(layer, what, how)
-            } else if (what === undefined) {
-                throw Error(`Layer updated(layer, what): 'what' cannot be undefined`)
-            } else {
-                return this.withOneUpdated(layer, what, how)
-            }
-        }
-
-        empty() {
-            return this.mutate({})
-        }
-
-        cleared(layer) {
-            return this.map(layer, () => undefined)
-        }
-
-        removed(layer, what) {
-            if (layer instanceof Array) {
-                let result = this
-                for (const l of layer) {
-                    result = result.removed(l, what)
-                }
-                return result
-            }
-            if (what === undefined) {
-                return this.cleared()
-            }
-            return this.updated(layer, what, undefined)
-        }
-
-        reset(layer, what, how) {
-            return this.cleared(layer).updated(layer, what, how)
+        removeEverythingAt(cell) {
+            this.setBackgroundIdAt(cell, defaultBackgroundId)
+            this.removeCharsAt(cell)
         }
     }
 
@@ -230,10 +178,6 @@ export default function useMapData() {
         localStorage.setItem("map", JSON.stringify({
             layers: layers.raw(),
         }))
-    }
-
-    const getItem = (layer, cell) => {
-        return layers.getItem(layer, cell)
     }
 
     function* getItems(cell) {
@@ -263,19 +207,19 @@ export default function useMapData() {
             }
         }
         {
-            const assetId = getItem(SPELLS, cell)
-            if (assetId) {
+            const spells = layers.getSpellsAt(cell)
+            for (const spell of spells) {
                 yield {
                     className: 'opacityAnimation',
                     style: {
                         opacity: "0.75",
                     },
-                    image: getImageUrlById(assetId),
+                    image: spell.asset.src,
                 }
             }
         }
         {
-            const arrowDescription = getItem(PATHFINDER, cell)
+            const arrowDescription = layers.getStepAt(cell)
             if (arrowDescription) {
                 yield { children: <Step description={arrowDescription} /> }
             }
@@ -286,10 +230,10 @@ export default function useMapData() {
 
     return {
         getItems,
-        getItem,
         layers,
-        setLayers,
+        commit: () => setLayers(layers.mutate()),
         reactLoadFromLocalStorage,
+        reactLoadEmpty: () => setLayers(new Layers()),
         saveToLocalStorage,
     }
 }

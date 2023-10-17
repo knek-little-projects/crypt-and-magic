@@ -1,4 +1,4 @@
-import { PATHFINDER, SPELLS } from "./map/layer-types"
+import { SPELLS } from "./map/layer-types"
 import { useEffect, useRef, useState } from "react"
 import useMapData from "./map/data"
 import Map from "./Map"
@@ -6,7 +6,7 @@ import findPath from "./map/find-path"
 import * as cellFuncs from "./map/cell-funcs"
 import useInterval from "./react-interval"
 import useAssets from "./assets"
-
+import uuidv4 from "./uuid"
 
 function getArrowDirection(a, b) {
     if (a.i < b.i && a.j === b.j) {
@@ -40,7 +40,7 @@ export default function MapPlayer() {
     const [delay, setDelay] = useState(0)
     const [casted, setCasted] = useState(null)
     const { assets, getAssetById } = useAssets()
-    const magicSpells = assets.filter(a => a.type === "magic").map(asset => new Spell({ asset, size: 1 }))
+    const magicSpells = assets.filter(a => a.type === SPELLS).map(asset => new Spell({ asset, size: 1 }))
 
     const data = useMapData()
     function getPlayer() {
@@ -57,7 +57,7 @@ export default function MapPlayer() {
         }
     }, [])
 
-    function getUpdatedSkeletons(additonalObstacle) {
+    function updateSkeletons(additonalObstacle) {
         const skeletons = data.layers.getChars().filter(char => char.asset.set === "skeletons")
         for (const skel of skeletons) {
             if (skel.movement === undefined) {
@@ -77,7 +77,6 @@ export default function MapPlayer() {
             }
             skel.cell = nextCell
         }
-        return skeletons
     }
 
     useInterval(() => {
@@ -94,7 +93,7 @@ export default function MapPlayer() {
             return
         }
 
-        const skels = getUpdatedSkeletons(currentMove)
+        updateSkeletons(currentMove)
         player.cell = currentMove;
 
         let swordAttack = false
@@ -108,13 +107,18 @@ export default function MapPlayer() {
             }
         }
 
-        let layers = data.layers.removed(PATHFINDER, currentMove)
+        const layers = data.layers
+        layers.removeStepAt(currentMove)
         if (swordAttack) {
-            layers = layers.updated(SPELLS, player.cell, "skel-sword")
+            layers.addSpell({
+                id: uuidv4(),
+                asset: getAssetById("skel-sword"),
+                cell: player.cell,
+            })
         }
 
         layers.replaceChar(player)
-        data.setLayers(layers.mutate())
+        data.commit()
     }, delay)
 
     function isAround(a, b) {
@@ -128,7 +132,8 @@ export default function MapPlayer() {
 
         if (casted) {
             setTimeout(() => {
-                data.setLayers(data.layers.cleared(SPELLS))
+                data.layers.clearSpells()
+                data.commit()
                 setRunEmulation(false)
                 setCasted(null)
             }, 1000)
@@ -141,7 +146,6 @@ export default function MapPlayer() {
     }, [runEmulation])
 
     const isObstacle = (cell) => data.layers.hasObstacle(cell)
-
 
     function buildPathTo(cell) {
         const cells = findPath(isObstacle, player.cell, cell)
@@ -160,7 +164,8 @@ export default function MapPlayer() {
         }
 
         ids.push(colorType + "c")
-        data.setLayers(data.layers.reset(PATHFINDER, cells, ids))
+        data.layers.setSteps(cells, ids)
+        data.commit()
     }
 
     const onClick = cell => {
@@ -182,7 +187,13 @@ export default function MapPlayer() {
                 console.error("No spells")
                 return
             }
-            data.setLayers(data.layers.reset(SPELLS, cell, magicSpells[0].asset.id))
+            data.layers.clearSpells()
+            data.layers.addSpell({
+                id: uuidv4(),
+                asset: magicSpells[0].asset,
+                cell,
+            })
+            data.commit()
             setCasted({ cell, spell: magicSpells[0] })
             setRunEmulation(true)
             setSelectedSpell(null)
@@ -194,7 +205,13 @@ export default function MapPlayer() {
         }
 
         if (selectedSpell) {
-            data.setLayers(data.layers.reset(SPELLS, cell, selectedSpell.asset.id))
+            data.layers.clearSpells()
+            data.layers.addSpell({
+                id: uuidv4(),
+                asset: selectedSpell.asset,
+                cell,
+            })
+            data.commit()
             setCasted({ cell, spell: selectedSpell })
             setRunEmulation(true)
             setSelectedSpell(null)
@@ -208,22 +225,15 @@ export default function MapPlayer() {
     const hoverSize = selectedSpell && selectedSpell.size || 1
     const hoverImageUrl = selectedSpell && selectedSpell.asset.src
 
-    function clearPath() {
-        data.setLayers(data.layers.cleared(PATHFINDER))
-        setMoves([])
-    }
-
     function switchSpell(spell) {
         if (selectedSpell && selectedSpell.id === spell.id) {
             setSelectedSpell(null)
             return
         }
         setSelectedSpell(spell)
-        clearPath()
-    }
-
-    function clearSpells() {
-        data.setLayers(data.layers.cleared(SPELLS))
+        data.layers.setSteps([])
+        data.commit()
+        setMoves([])
     }
 
     const magicButtons = []
@@ -252,8 +262,10 @@ export default function MapPlayer() {
                         disabled={runEmulation}
                         style={{ height: "40px" }}
                         onClick={() => {
-                            clearPath()
-                            clearSpells()
+                            data.layers.setSteps([])
+                            data.layers.clearSpells()
+                            data.commit()
+                            setMoves([])                    
                             setSelectedSpell(null)
                         }}>
                         CLEAR

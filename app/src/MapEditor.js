@@ -24,7 +24,7 @@ export default function MapEditor() {
     const [hoverImageUrl, setHoverImageUrl] = useState(null)
     const [hoverStyle, setHoverStyle] = useState({})
 
-    const buttons = assets.filter(o => o.type === "background").map(o => (
+    const buttons = assets.filter(o => o.type === BACKGROUND).map(o => (
         <MapEditorBrushButton src={o.src} key={o.id} onClick={() => setBrush({ id: o.id, size: 1 })}>
             {o.name}
         </MapEditorBrushButton>
@@ -49,10 +49,16 @@ export default function MapEditor() {
         const cells = getCellsAround(center, brush.size)
 
         if (asset.id === "erasor") {
-            const layers = data.layers.removed([BACKGROUND, CHARACTERS], cells)
-            cells.forEach(cell => layers.removeCharsAt(cell))
-            data.setLayers(layers.mutate())
+            cells.forEach(cell => data.layers.removeEverythingAt(cell))
+            data.commit()
             return
+        }
+
+        if (asset.type === CHARACTERS) {
+            if (data.layers.hasObstacle(center)) {
+                console.warn("has obstacle")
+                return
+            }
         }
 
         if (asset.id === "wizard") {
@@ -67,9 +73,8 @@ export default function MapEditor() {
             if (oldPlayer) {
                 player = { ...oldPlayer, cell: center }
             }
-            const layers = data.layers
-            layers.replaceChar(player)
-            data.setLayers(layers.mutate())
+            data.layers.replaceChar(player)
+            data.commit()
             return
         }
 
@@ -85,7 +90,8 @@ export default function MapEditor() {
         }
 
         if (asset.type === BACKGROUND) {
-            data.setLayers(data.layers.updated(BACKGROUND, cells, brush.id))
+            cells.forEach(cell => data.layers.setBackgroundIdAt(cell, brush.id))
+            data.commit()
             return
         }
     }
@@ -107,7 +113,7 @@ export default function MapEditor() {
             }
         }
 
-        if (brush.size === 1 && brush.id === data.getItem("background", cell)) {
+        if (brush.size === 1 && brush.id === data.layers.getBackgroundAt(cell).asset.id) {
             return {
                 image: null,
                 style: {},
@@ -164,7 +170,7 @@ export default function MapEditor() {
             <hr />
             <button onClick={() => data.saveToLocalStorage()}>SAVE</button>
             <button onClick={() => data.reactLoadFromLocalStorage()}>LOAD</button>
-            <button onClick={() => data.setLayers(data.layers.empty())}>CLEAR</button>
+            <button onClick={() => { data.reactLoadEmpty() }}>CLEAR</button>
         </div>
     );
 }

@@ -1,4 +1,4 @@
-import { BACKGROUND, CHARACTERS } from "./map/layer-types"
+import { BACKGROUND, CHARACTERS, SPELLS } from "./map/layer-types"
 
 export default function useAssets() {
     const assets = [
@@ -63,7 +63,7 @@ export default function useAssets() {
             name: "fireball",
             id: "fireball",
             src: "/map/fireball.png",
-            type: "magic",
+            type: SPELLS,
         },
         {
             name: "Skeleton Mage",
@@ -83,7 +83,7 @@ export default function useAssets() {
             name: "Skeleton Sword",
             id: "skel-sword",
             src: "/map/skel-sword.png",
-            type: "magic",
+            type: SPELLS,
         },
     ]
     function findAssetById(id) {
