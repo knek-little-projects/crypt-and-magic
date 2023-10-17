@@ -156,26 +156,22 @@ export default function Map({
 
     if (hoverAbsCell !== null) {
         let { x, y } = grid.getOffsetedScreenCellPointByAbsCell(hoverAbsCell)
-        let cellWidth = cellSize
-        let cellHeight = cellSize
+        let cellSize_ = cellSize * hoverSize
 
         if (hoverSize > 1) {
-            cellWidth = hoverSize * cellSize
-            cellHeight = hoverSize * cellSize
             const offset = Math.floor(hoverSize / 2)
             x -= offset * cellSize
             y -= offset * cellSize
         }
 
         cells.push(
-            <div
+            <Cell
                 key="cell_hover"
-                className='cell cell-hover'
+                className='cell-hover'
+                x={x}
+                y={y}
+                cellSize={cellSize_}
                 style={{
-                    left: x + 'px',
-                    top: y + 'px',
-                    width: cellWidth + 'px',
-                    height: cellHeight + 'px',
                     backgroundColor: "rgba(100, 100, 100, 0.5)",
                     ...hoverStyle,
                 }}
@@ -184,7 +180,7 @@ export default function Map({
                     hoverImageUrl &&
                     <img src={hoverImageUrl} draggable={false} />
                 }
-            </div>
+            </Cell>
         )
     }
 
