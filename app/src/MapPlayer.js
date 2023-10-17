@@ -1,4 +1,4 @@
-import { BACKGROUND, CHARACTERS, PATHFINDER, SPELLS } from "./map/layer-types"
+import { PATHFINDER, SPELLS } from "./map/layer-types"
 import { useEffect, useRef, useState } from "react"
 import useMapData from "./map/data"
 import Map from "./Map"
@@ -41,12 +41,12 @@ export default function MapPlayer() {
     const [casted, setCasted] = useState(null)
     const { assets, getAssetById } = useAssets()
     const magicSpells = assets.filter(a => a.type === "magic").map(asset => new Spell({ asset, size: 1 }))
-    const mapSize = 10
 
     const data = useMapData()
     function getPlayer() {
-        return data.chars.find(char => char.asset.id === "wizard")
+        return data.layers.findChar("wizard")
     }
+
     const player = getPlayer()
 
     useEffect(() => {
@@ -57,22 +57,8 @@ export default function MapPlayer() {
         }
     }, [])
 
-    function cellRight({ i, j }) {
-        return {
-            i: i + 1,
-            j,
-        }
-    }
-
-    function cellLeft({ i, j }) {
-        return {
-            i: i - 1,
-            j
-        }
-    }
-
     function getUpdatedSkeletons(additonalObstacle) {
-        const skeletons = data.chars.filter(char => char.asset.set === "skeletons")
+        const skeletons = data.layers.getChars().filter(char => char.asset.set === "skeletons")
         for (const skel of skeletons) {
             if (skel.movement === undefined) {
                 skel.movement = +1
@@ -114,7 +100,7 @@ export default function MapPlayer() {
         let swordAttack = false
         {
             const player = getPlayer()
-            for (const skel of data.chars.filter(char => char.asset.set === "skeletons")) {
+            for (const skel of data.layers.getChars().filter(char => char.asset.set === "skeletons")) {
                 if (isAround(skel.cell, player.cell)) {
                     swordAttack = true
                     break
@@ -126,8 +112,9 @@ export default function MapPlayer() {
         if (swordAttack) {
             layers = layers.updated(SPELLS, player.cell, "skel-sword")
         }
-        data.setLayers(layers)
-        data.setChars([player, ...skels])
+
+        layers.replaceChar(player)
+        data.setLayers(layers.mutate())
     }, delay)
 
     function isAround(a, b) {
@@ -141,7 +128,6 @@ export default function MapPlayer() {
 
         if (casted) {
             setTimeout(() => {
-                data.setChars(data.chars.filter(char => !cellFuncs.eq(char.cell, casted.cell)))
                 data.setLayers(data.layers.cleared(SPELLS))
                 setRunEmulation(false)
                 setCasted(null)
@@ -154,19 +140,8 @@ export default function MapPlayer() {
         }
     }, [runEmulation])
 
-    const isObstacle = (cell) => {
-        if (cellFuncs.isOutsideOfMap(cell, mapSize)) {
-            return true
-        }
+    const isObstacle = (cell) => data.layers.hasObstacle(cell)
 
-        const hasObstacle = [BACKGROUND, CHARACTERS]
-            .map(layer => data.getItem(layer, cell))
-            .filter(id => id)
-            .map(id => getAssetById(id))
-            .some(asset => asset.isObstacle);
-
-        return hasObstacle
-    }
 
     function buildPathTo(cell) {
         const cells = findPath(isObstacle, player.cell, cell)
@@ -201,7 +176,8 @@ export default function MapPlayer() {
             return
         }
 
-        if (data.getItem(CHARACTERS, cell)) {
+        const chars = data.layers.getCharsAt(cell)
+        if (chars.length > 0) {
             if (magicSpells.length === 0) {
                 console.error("No spells")
                 return
@@ -270,20 +246,22 @@ export default function MapPlayer() {
 
     return (
         <>
-            <div>
-                <button
-                    disabled={runEmulation}
-                    style={{ height: "40px" }}
-                    onClick={() => {
-                        clearPath()
-                        clearSpells()
-                        setSelectedSpell(null)
-                    }}>
-                    CLEAR
-                </button>
-                <div className="vr" />
-                {magicButtons}
-            </div>
+            {player &&
+                <div>
+                    <button
+                        disabled={runEmulation}
+                        style={{ height: "40px" }}
+                        onClick={() => {
+                            clearPath()
+                            clearSpells()
+                            setSelectedSpell(null)
+                        }}>
+                        CLEAR
+                    </button>
+                    <div className="vr" />
+                    {magicButtons}
+                </div>
+            }
             <Map
                 hoverImageUrl={hoverImageUrl}
                 hoverSize={hoverSize}

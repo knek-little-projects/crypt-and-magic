@@ -6,6 +6,7 @@ import useMapData from './map/data';
 import Map from "./Map"
 import { BACKGROUND, CHARACTERS } from './map/layer-types';
 import * as cellFuncs from "./map/cell-funcs"
+import uuidv4 from "./uuid"
 
 function MapEditorBrushButton({ src, onClick, children }) {
     return (
@@ -48,34 +49,38 @@ export default function MapEditor() {
         const cells = getCellsAround(center, brush.size)
 
         if (asset.id === "erasor") {
-            data.setLayers(data.layers.removed([BACKGROUND, CHARACTERS], cells))
-            data.setChars(data.chars.filter(char => cells.find(cell => !cellFuncs.eq(cell, char.cell))))
+            const layers = data.layers.removed([BACKGROUND, CHARACTERS], cells)
+            cells.forEach(cell => layers.removeCharsAt(cell))
+            data.setLayers(layers.mutate())
             return
         }
 
         if (asset.id === "wizard") {
             let player = {
+                id: "wizard",
                 cell: center,
                 health: 100,
                 asset,
             }
 
-            const oldPlayer = data.chars.find(char => char.asset.id === asset.id)
+            const oldPlayer = data.layers.getChars().find(char => char.asset.id === asset.id)
             if (oldPlayer) {
                 player = { ...oldPlayer, cell: center }
             }
-
-            data.setChars([...data.chars.filter(c => c.asset.id !== asset.id), player])
+            const layers = data.layers
+            layers.replaceChar(player)
+            data.setLayers(layers.mutate())
             return
         }
 
         if (asset.type === CHARACTERS) {
             const skeleton = {
+                id: uuidv4(),
                 asset,
                 health: 100,
                 cell: center,
             }
-            data.setChars([...data.chars, skeleton])
+            data.layers.addChar(skeleton)
             return
         }
 
