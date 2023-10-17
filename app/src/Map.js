@@ -8,6 +8,32 @@ import { BACKGROUND, CHARACTERS, PATHFINDER, SPELLS } from './map/layer-types';
 import Step from "./map/step"
 import * as cellFuncs from "./map/cell-funcs"
 
+function Cell({
+    x,
+    y,
+    cellSize,
+    children,
+    style,
+    className,
+}) {
+    const style_ = {
+        left: x + 'px',
+        top: y + 'px',
+        width: cellSize + 'px',
+        height: cellSize + 'px',
+        ...style,
+    }
+    const className_ = `cell ${className}`
+    return (
+        <div
+            className={className_}
+            style={style_}
+        >
+            {children}
+        </div>
+    )
+}
+
 export default function Map({
     getItem,
     hoverSize = 1,
@@ -46,15 +72,13 @@ export default function Map({
 
             if (cellFuncs.isOutsideOfMap(absCell, mapSize)) {
                 cells.push(
-                    <div
+                    <Cell
                         key={`cell_${i}_${j}`}
-                        className='cell'
+                        x={x}
+                        y={y}
+                        cellSize={cellSize}
                         style={{
-                            left: x + 'px',
-                            top: y + 'px',
-                            width: cellSize + 'px',
-                            height: cellSize + 'px',
-                            background: "black",
+                            background: "black"
                         }}
                     />
                 )
@@ -63,14 +87,12 @@ export default function Map({
 
             const backgroundId = getItem(BACKGROUND, absCell) || "grass"
             cells.push(
-                <div
+                <Cell
                     key={`cell_${i}_${j}`}
-                    className='cell'
+                    cellSize={cellSize}
+                    x={x}
+                    y={y}
                     style={{
-                        left: x + 'px',
-                        top: y + 'px',
-                        width: cellSize + 'px',
-                        height: cellSize + 'px',
                         backgroundImage: "url('" + getImageUrlById(backgroundId) + "')",
                     }}
                 >
@@ -81,20 +103,17 @@ export default function Map({
                             {absCell.i},{absCell.j},{backgroundId}
                         </div>
                     }
-                </div>
+                </Cell>
             )
 
             const foregroundId = getItem(CHARACTERS, absCell)
             if (foregroundId) {
                 cells.push(
-                    <div
-                        key={`cell_fg_${i}_${j}`}
-                        className='cell'
+                    <Cell
+                        x={x}
+                        y={y}
+                        cellSize={cellSize}
                         style={{
-                            left: x + 'px',
-                            top: y + 'px',
-                            width: cellSize + 'px',
-                            height: cellSize + 'px',
                             backgroundImage: "url('" + getImageUrlById(foregroundId) + "')",
                         }}
                     />
@@ -104,38 +123,32 @@ export default function Map({
             const spellId = getItem(SPELLS, absCell)
             if (spellId) {
                 cells.push(
-                    <div
+                    <Cell
                         key={`cell_planspell_${i}_${j}`}
-                        className='cell opacityAnimation'
+                        className='opacityAnimation'
+                        x={x}
+                        y={y}
+                        cellSize={cellSize}
                         style={{
-                            left: x + 'px',
-                            top: y + 'px',
-                            width: cellSize + 'px',
-                            height: cellSize + 'px',
-                            // filter: "grayscale(0.99)",
                             opacity: "0.75",
                         }}
                     >
                         <img src={getImageUrlById(spellId)} draggable={false} />
-                    </div>
+                    </Cell>
                 )
             }
 
             const arrowDescription = getItem(PATHFINDER, absCell)
             if (arrowDescription) {
                 cells.push(
-                    <div
+                    <Cell
                         key={`cell_arrow_${i}_${j}`}
-                        className='cell'
-                        style={{
-                            left: x + 'px',
-                            top: y + 'px',
-                            width: cellSize + 'px',
-                            height: cellSize + 'px',
-                        }}
+                        x={x}
+                        y={y}
+                        cellSize={cellSize}
                     >
                         <Step description={arrowDescription} />
-                    </div>
+                    </Cell>
                 )
             }
         }
