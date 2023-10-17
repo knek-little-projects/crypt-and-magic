@@ -14,7 +14,7 @@ export default function useMapData() {
     const mapSize = 10
     const defaultBackgroundId = "grass"
 
-    class Layers {
+    class Map {
         constructor(data) {
             this._data = data || {}
             if (!this._data.background) {
@@ -154,7 +154,7 @@ export default function useMapData() {
         }
 
         mutate() {
-            return new Layers({ ...this._data })
+            return new Map({ ...this._data })
         }
 
         raw() {
@@ -167,16 +167,16 @@ export default function useMapData() {
         }
     }
 
-    const [layers, setLayers] = useState(new Layers())
+    const [map, setMap] = useState(new Map())
 
     function reactLoadFromLocalStorage() {
-        const { layers } = JSON.parse(localStorage.getItem("map"))
-        setLayers(new Layers(layers))
+        const { map } = JSON.parse(localStorage.getItem("map"))
+        setMap(new Map(map))
     }
 
     function saveToLocalStorage() {
         localStorage.setItem("map", JSON.stringify({
-            layers: layers.raw(),
+            map: map.raw()
         }))
     }
 
@@ -186,7 +186,7 @@ export default function useMapData() {
             return
         }
         {
-            const { asset } = layers.getBackgroundAt(cell)
+            const { asset } = map.getBackgroundAt(cell)
             yield { image: asset.src }
 
             const children = (
@@ -197,7 +197,7 @@ export default function useMapData() {
             yield { children }
         }
         {
-            const chars = layers.getCharsAt(cell)
+            const chars = map.getCharsAt(cell)
             if (chars.length > 0) {
                 if (chars.length > 1) {
                     throw Error(`not implemented yet`)
@@ -207,7 +207,7 @@ export default function useMapData() {
             }
         }
         {
-            const spells = layers.getSpellsAt(cell)
+            const spells = map.getSpellsAt(cell)
             for (const spell of spells) {
                 yield {
                     className: 'opacityAnimation',
@@ -219,21 +219,21 @@ export default function useMapData() {
             }
         }
         {
-            const arrowDescription = layers.getStepAt(cell)
+            const arrowDescription = map.getStepAt(cell)
             if (arrowDescription) {
                 yield { children: <Step description={arrowDescription} /> }
             }
         }
     }
 
-    window.$layers = layers
+    window.$map = map
 
     return {
         getItems,
-        layers,
-        commit: () => setLayers(layers.mutate()),
+        map,
+        commit: () => setMap(map.mutate()),
         reactLoadFromLocalStorage,
-        reactLoadEmpty: () => setLayers(new Layers()),
+        reactLoadEmpty: () => setMap(new Map()),
         saveToLocalStorage,
     }
 }

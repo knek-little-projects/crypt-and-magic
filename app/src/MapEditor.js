@@ -49,13 +49,13 @@ export default function MapEditor() {
         const cells = getCellsAround(center, brush.size)
 
         if (asset.id === "erasor") {
-            cells.forEach(cell => data.layers.removeEverythingAt(cell))
+            cells.forEach(cell => data.map.removeEverythingAt(cell))
             data.commit()
             return
         }
 
         if (asset.type === CHARACTERS) {
-            if (data.layers.hasObstacle(center)) {
+            if (data.map.hasObstacle(center)) {
                 console.warn("has obstacle")
                 return
             }
@@ -69,11 +69,11 @@ export default function MapEditor() {
                 asset,
             }
 
-            const oldPlayer = data.layers.getChars().find(char => char.asset.id === asset.id)
+            const oldPlayer = data.map.getChars().find(char => char.asset.id === asset.id)
             if (oldPlayer) {
                 player = { ...oldPlayer, cell: center }
             }
-            data.layers.replaceChar(player)
+            data.map.replaceChar(player)
             data.commit()
             return
         }
@@ -85,12 +85,12 @@ export default function MapEditor() {
                 health: 100,
                 cell: center,
             }
-            data.layers.addChar(skeleton)
+            data.map.addChar(skeleton)
             return
         }
 
         if (asset.type === BACKGROUND) {
-            cells.forEach(cell => data.layers.setBackgroundIdAt(cell, brush.id))
+            cells.forEach(cell => data.map.setBackgroundIdAt(cell, brush.id))
             data.commit()
             return
         }
@@ -113,7 +113,7 @@ export default function MapEditor() {
             }
         }
 
-        if (brush.size === 1 && brush.id === data.layers.getBackgroundAt(cell).asset.id) {
+        if (brush.size === 1 && brush.id === data.map.getBackgroundAt(cell).asset.id) {
             return {
                 image: null,
                 style: {},

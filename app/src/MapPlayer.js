@@ -44,7 +44,7 @@ export default function MapPlayer() {
 
     const data = useMapData()
     function getPlayer() {
-        return data.layers.findChar("wizard")
+        return data.map.findChar("wizard")
     }
 
     const player = getPlayer()
@@ -58,7 +58,7 @@ export default function MapPlayer() {
     }, [])
 
     function updateSkeletons(additonalObstacle) {
-        const skeletons = data.layers.getChars().filter(char => char.asset.set === "skeletons")
+        const skeletons = data.map.getChars().filter(char => char.asset.set === "skeletons")
         for (const skel of skeletons) {
             if (skel.movement === undefined) {
                 skel.movement = +1
@@ -99,7 +99,7 @@ export default function MapPlayer() {
         let swordAttack = false
         {
             const player = getPlayer()
-            for (const skel of data.layers.getChars().filter(char => char.asset.set === "skeletons")) {
+            for (const skel of data.map.getChars().filter(char => char.asset.set === "skeletons")) {
                 if (isAround(skel.cell, player.cell)) {
                     swordAttack = true
                     break
@@ -107,17 +107,17 @@ export default function MapPlayer() {
             }
         }
 
-        const layers = data.layers
-        layers.removeStepAt(currentMove)
+        const map = data.map
+        map.removeStepAt(currentMove)
         if (swordAttack) {
-            layers.addSpell({
+            map.addSpell({
                 id: uuidv4(),
                 asset: getAssetById("skel-sword"),
                 cell: player.cell,
             })
         }
 
-        layers.replaceChar(player)
+        map.replaceChar(player)
         data.commit()
     }, delay)
 
@@ -132,7 +132,7 @@ export default function MapPlayer() {
 
         if (casted) {
             setTimeout(() => {
-                data.layers.clearSpells()
+                data.map.clearSpells()
                 data.commit()
                 setRunEmulation(false)
                 setCasted(null)
@@ -145,7 +145,7 @@ export default function MapPlayer() {
         }
     }, [runEmulation])
 
-    const isObstacle = (cell) => data.layers.hasObstacle(cell)
+    const isObstacle = (cell) => data.map.hasObstacle(cell)
 
     function buildPathTo(cell) {
         const cells = findPath(isObstacle, player.cell, cell)
@@ -164,7 +164,7 @@ export default function MapPlayer() {
         }
 
         ids.push(colorType + "c")
-        data.layers.setSteps(cells, ids)
+        data.map.setSteps(cells, ids)
         data.commit()
     }
 
@@ -181,14 +181,14 @@ export default function MapPlayer() {
             return
         }
 
-        const chars = data.layers.getCharsAt(cell)
+        const chars = data.map.getCharsAt(cell)
         if (chars.length > 0) {
             if (magicSpells.length === 0) {
                 console.error("No spells")
                 return
             }
-            data.layers.clearSpells()
-            data.layers.addSpell({
+            data.map.clearSpells()
+            data.map.addSpell({
                 id: uuidv4(),
                 asset: magicSpells[0].asset,
                 cell,
@@ -205,8 +205,8 @@ export default function MapPlayer() {
         }
 
         if (selectedSpell) {
-            data.layers.clearSpells()
-            data.layers.addSpell({
+            data.map.clearSpells()
+            data.map.addSpell({
                 id: uuidv4(),
                 asset: selectedSpell.asset,
                 cell,
@@ -231,7 +231,7 @@ export default function MapPlayer() {
             return
         }
         setSelectedSpell(spell)
-        data.layers.setSteps([])
+        data.map.setSteps([])
         data.commit()
         setMoves([])
     }
@@ -262,8 +262,8 @@ export default function MapPlayer() {
                         disabled={runEmulation}
                         style={{ height: "40px" }}
                         onClick={() => {
-                            data.layers.setSteps([])
-                            data.layers.clearSpells()
+                            data.map.setSteps([])
+                            data.map.clearSpells()
                             data.commit()
                             setMoves([])                    
                             setSelectedSpell(null)
