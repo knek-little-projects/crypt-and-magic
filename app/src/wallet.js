@@ -68,3 +68,54 @@ export async function fetchMap({ signer, address }) {
     const contract = new ethers.Contract(address, contractData.abi, signer)
     return contract
 }
+
+export function convertMatrixToBytes(N, f) {
+    if (!parseInt(N)) {
+        throw Error()
+    }
+
+    if (typeof f !== "function") {
+        throw Error()
+    }
+
+    let bits = '';
+    for (let i = 0; i < N; i++) {
+        for (let j = 0; j < N; j++) {
+            bits += f({ i, j }) ? '1' : '0';
+        }
+    }
+    
+    // Convert the bits to bytes
+    let bytesArr = [];
+    for (let i = 0; i < bits.length; i += 8) {
+        const byte = parseInt(bits.slice(i, i+8), 2)
+        bytesArr.push(byte)
+    }
+
+    // Convert the array of bytes to a bytes format using ethers
+    const bytes = ethers.utils.concat(bytesArr);
+
+    return bytes
+}
+
+export function convertBytesToMatrix(N, bytes) {
+    if (!parseInt(N)) {
+        throw Error()
+    }
+    bytes = ethers.utils.arrayify(bytes)
+
+    let bits = '';
+    for (let i = 0; i < bytes.length; i++) {
+        let byte = bytes[i]
+        let byteBits = byte.toString(2).padStart(8, '0')
+        bits += byteBits
+    }
+
+    console.log(bits)
+
+    // Now, recreate the function f() using the bits
+    return function f({ i, j }) {
+        let index = i * N + j;
+        return bits[index] === '1';
+    };
+}

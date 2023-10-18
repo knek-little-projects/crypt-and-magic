@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import useAssets from './assets'
 
 import { ethers, providers } from 'ethers';
-import { deployMap, fetchMap, useWallet } from "./wallet"
+import { convertBytesToMatrix, convertMatrixToBytes, deployMap, fetchMap, useWallet } from "./wallet"
 
 import "./App.scss"
 import useMapData from './map/data';
@@ -22,6 +22,7 @@ function MapEditorBrushButton({ src, onClick, children }) {
 
 export default function MapEditor() {
     const data = useMapData()
+    const N = data.mapSize
     const { assets, getImageUrlById, findAssetById } = useAssets()
     const [brush, setBrush] = useState({ id: "grass", size: 1 })
     const [hoverImageUrl, setHoverImageUrl] = useState(null)
@@ -136,6 +137,8 @@ export default function MapEditor() {
     }
 
     useEffect(() => {
+        setInputContractAddress(localStorage.getItem("lastContractAddress"))
+        
         try {
             data.reactLoadFromLocalStorage()
         } catch (e) {
@@ -147,10 +150,9 @@ export default function MapEditor() {
     const { signer, account } = window.$wallet = useWallet()
     const [contract, setContract] = useState(null)
 
-    const N = 16
-    const obstacles = ethers.utils.formatBytes32String("0x0");
-
     async function deployContract() {
+        // const obstacles = ethers.utils.formatBytes32String("0x0");
+        const obstacles = convertMatrixToBytes(N, cell => data.map.getBackgroundAt(cell).asset.isObstacle)
         setContract(await deployMap({ signer, N, obstacles }))
     }
 
@@ -161,6 +163,22 @@ export default function MapEditor() {
 
         console.log(window.$contract = contract)
         setInputContractAddress(contract.address)
+        localStorage.setItem("lastContractAddress", contract.address)
+
+        contract.obstacles().then(obstacles => {
+            const f = convertBytesToMatrix(N, obstacles)
+
+            data.map.clear()
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    if (f({ i, j })) {
+                        data.map.setBackgroundIdAt({ i, j }, "water")
+                    }
+                }
+            }
+
+            data.commit()
+        })
     }, [contract])
 
     const [inputContractAddress, setInputContractAddress] = useState("")
@@ -181,7 +199,7 @@ export default function MapEditor() {
                     <input type="text" value={inputContractAddress} onInput={e => setInputContractAddress(e.target.value)} style={{ width: "400px" }} />
                 </div>
                 ||
-                <div>Account is not connected</div>
+                <div>Unlock MetaMask and reload the page</div>
             }
             <br />
 
@@ -204,6 +222,7 @@ export default function MapEditor() {
             <hr />
             <Map
                 getItems={data.getItems}
+                mapSize={data.mapSize}
                 onBrush={onBrush}
                 onHover={onHover}
                 hoverSize={brush.size}

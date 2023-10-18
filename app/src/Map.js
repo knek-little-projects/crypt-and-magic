@@ -35,6 +35,7 @@ function Cell({
 
 export default function Map({
     getItems,
+    mapSize,
     hoverSize = 1,
     hoverImageUrl = null,
     hoverStyle = {},
@@ -44,7 +45,6 @@ export default function Map({
 }) {
     const { offset, dragHandlers } = useDragOffset({ mouseButton: 2 })
 
-    const mapSize = 10
     const cellSize = 50
     const grid = useGrid({ offset, cellSize, mapSize })
 

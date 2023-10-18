@@ -17,25 +17,14 @@ contract Map {
 
     event CastedSpell(address player, address target, uint spellId);
     event Movement(address player, uint steps);
-    event SkeletonAdded(address skeleton, uint x, uint y);
-    event PlayerAdded(address player, uint x, uint y);
+    event SkeletonAdded(address skeleton, uint i);
+    event PlayerAdded(address player, uint i);
 
     constructor(uint256 _N, bytes memory _obstacles) {
         require((_N * _N) / 8 == _obstacles.length, "Data does not match expected NxN size");
 
         N = _N;
         obstacles = _obstacles;
-    }
-
-    function getCell(uint256 x, uint256 y) public view returns (uint8) {
-        require(x < N && y < N, "Out of bounds");
-
-        uint256 byteIndex = (x * N + y) / 8;
-        uint256 bitIndex = (x * N + y) % 8;
-
-        uint8 cellBit = uint8((obstacles[byteIndex] >> bitIndex) & 0x01);
-
-        return cellBit;
     }
 
     function castSpell(uint spellId, address target) public {
@@ -46,7 +35,7 @@ contract Map {
         emit Movement(msg.sender, steps);
     }
 
-    function addSkeleton(address skeleton, uint x, uint y) public {
+    function addSkeleton(address skeleton, uint i) public {
         require(skeleton != address(0), "Invalid skeleton address");
         require(players[skeleton].damage == 0, "Skeleton already added");
 
@@ -59,10 +48,10 @@ contract Map {
         });
         skeletons.push(skeletonAddress);
 
-        emit SkeletonAdded(skeletonAddress, x, y);
+        emit SkeletonAdded(skeletonAddress, i);
     }
 
-    function addPlayer(uint x, uint y) public {
+    function addPlayer(uint i) public {
         require(players[msg.sender].damage == 0, "Player already added");
 
         players[msg.sender] = Player({
@@ -70,6 +59,6 @@ contract Map {
             direction: 0 // Assuming initial direction is 0. You can change it.
         });
 
-        emit PlayerAdded(msg.sender, x, y);
+        emit PlayerAdded(msg.sender, i);
     }
 }

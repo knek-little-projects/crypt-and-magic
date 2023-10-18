@@ -286,6 +286,7 @@ export default function MapPlayer() {
             <Map
                 hoverImageUrl={hoverImageUrl}
                 hoverSize={hoverSize}
+                mapSize={data.mapSize}
                 getItems={data.getItems}
                 onClick={onClick}
             />

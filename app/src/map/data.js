@@ -9,12 +9,16 @@ function key({ i, j }) {
 
 export default function useMapData() {
 
-    const { getImageUrlById, getAssetById } = useAssets()
-    const mapSize = 10
+    const { getAssetById } = useAssets()
+    const mapSize = 16
     const defaultBackgroundId = "grass"
 
     class Map {
         constructor(data) {
+            this._reset(data)
+        }
+
+        _reset(data) {
             this._data = data || {}
             if (!this._data.background) {
                 this._data.background = {}
@@ -171,6 +175,10 @@ export default function useMapData() {
             return false
         }
 
+        clear() {
+            this._reset()
+        }
+
         mutate() {
             return new Map({ ...this._data })
         }
@@ -202,6 +210,7 @@ export default function useMapData() {
 
     return {
         map,
+        mapSize,
         getItems: cell => render(map, cell),
         commit: () => setMap(map.mutate()),
         reactLoadFromLocalStorage,
