@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import MapEditor from './MapEditor';
 import MapPlayer from './MapPlayer';
+import TestComponent from './TestComponent';
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MapPlayer />} />
         <Route path="/editor" element={<MapEditor />} />
+        <Route path="/test" element={<TestPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
@@ -22,21 +24,14 @@ function Navigation() {
       <ul>
         <li><Link to="/">Play</Link></li>
         <li><Link to="/editor">Edit</Link></li>
+        <li><Link to="/test">Test</Link></li>
       </ul>
     </nav>
   );
 }
 
-function HomePage() {
-  return <div>Welcome to the Home Page!</div>;
-}
-
-function AboutPage() {
-  return <div>About Us</div>;
-}
-
-function ContactPage() {
-  return <div>Contact Us</div>;
+function TestPage() {
+  return <TestComponent />
 }
 
 function NotFound() {

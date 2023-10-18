@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import useAssets from './assets'
 
+import { ethers, providers } from 'ethers';
+import { deployMap, fetchMap, useWallet } from "./wallet"
+
 import "./App.scss"
 import useMapData from './map/data';
 import Map from "./Map"
@@ -140,8 +143,48 @@ export default function MapEditor() {
         }
     }, [])
 
+
+    const { signer, account } = window.$wallet = useWallet()
+    const [contract, setContract] = useState(null)
+
+    const N = 16
+    const obstacles = ethers.utils.formatBytes32String("0x0");
+
+    async function deployContract() {
+        setContract(await deployMap({ signer, N, obstacles }))
+    }
+
+    useEffect(() => {
+        if (!contract) {
+            return
+        }
+
+        console.log(window.$contract = contract)
+        setInputContractAddress(contract.address)
+    }, [contract])
+
+    const [inputContractAddress, setInputContractAddress] = useState("")
+
+    async function loadContract() {
+        setContract(await fetchMap({ signer, address: inputContractAddress }))
+    }
+
     return (
         <div className='MapEditor'>
+
+            {
+                account &&
+                <div>
+                    <p>Connected Account: {account}</p>
+                    <button onClick={deployContract}>Deploy Map Contract</button>
+                    <button onClick={loadContract}>Load</button>
+                    <input type="text" value={inputContractAddress} onInput={e => setInputContractAddress(e.target.value)} style={{ width: "400px" }} />
+                </div>
+                ||
+                <div>Account is not connected</div>
+            }
+            <br />
+
             <div className='brush-buttons'>
                 <MapEditorBrushButton src="/map/erasor.png" onClick={() => setBrush({ id: "erasor", size: 1 })}>
                     Erase 1x1
@@ -168,9 +211,11 @@ export default function MapEditor() {
                 hoverStyle={hoverStyle}
             />
             <hr />
+            <span>Local storage:</span>
             <button onClick={() => data.saveToLocalStorage()}>SAVE</button>
             <button onClick={() => data.reactLoadFromLocalStorage()}>LOAD</button>
             <button onClick={() => { data.reactLoadEmpty() }}>CLEAR</button>
+
         </div>
     );
 }
