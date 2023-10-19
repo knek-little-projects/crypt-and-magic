@@ -68,7 +68,7 @@ export default function MapEditor() {
             let player = {
                 id: "wizard",
                 cell: center,
-                health: 100,
+                damage: 0,
                 asset,
             }
 
@@ -85,7 +85,7 @@ export default function MapEditor() {
             const skeleton = {
                 id: uuidv4(),
                 asset,
-                health: 100,
+                damage: 0,
                 cell: center,
             }
             data.map.addChar(skeleton)

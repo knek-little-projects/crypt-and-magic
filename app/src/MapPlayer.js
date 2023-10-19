@@ -104,12 +104,14 @@ export default function MapPlayer() {
                 asset: getAssetById("skel-sword"),
                 targetId: player.id,
             })
-            player.health -= 25
+            player.damage += 25
         }
 
         map.replaceChar(player)
 
-        data.map.getChars().filter(char => char.health <= 0).forEach(char => data.map.removeChar(char))
+        console.warn("Everybody immortale")
+        // data.map.getChars().filter(char => char.damage >= 100).forEach(char => data.map.removeChar(char))
+        
         data.commit()
     }, delay)
 
@@ -124,7 +126,7 @@ export default function MapPlayer() {
 
         if (casted) {
             setTimeout(() => {
-                data.map.getSpells().forEach(spell => data.map.getCharsAtSpell(spell).forEach(char => char.health -= 40))
+                data.map.getSpells().forEach(spell => data.map.getCharsAtSpell(spell).forEach(char => char.damage += 40))
                 data.map.getChars().filter(char => char.health <= 0).forEach(char => data.map.removeChar(char))
                 data.map.clearSpells()
                 data.commit()

@@ -54,7 +54,7 @@ export function useOnchainData({ autoload }) {
             data.map.addChar({
                 id: addr,
                 asset: getAssetById(state.asset === 0 ? "skel-mage" : "wizard"),
-                health: 255 - state.damage,
+                damage: state.damage,
                 direction: -1 + state.direction,
                 cell: { i, j },
             })
@@ -90,6 +90,39 @@ export function useOnchainData({ autoload }) {
     async function loadContract(address) {
         setContract(await fetchMap({ signer, address }))
     }
+
+    useEffect(() => {
+        if (!contract) {
+            return;
+        }
+
+        async function handlePlayerAdded(id, p) {
+            console.debug("handlePlayerAdded")
+            const { damage } = await contract.characterAddressToCharacterState(id)
+            data.map.addChar({
+                id,
+                asset: getAssetById("wizard"),
+                damage,
+                cell: cellFuncs.positionToCell(p, N),
+            })
+            data.commit()
+        }
+
+        function handlePlayerRemoved(id) {
+            console.debug("handlePlayerRemoved")
+            data.map.removeChar({ id })
+            data.commit()
+        }
+
+        contract.on('PlayerAdded', handlePlayerAdded);
+        contract.on('PlayerRemoved', handlePlayerRemoved);
+
+        return () => {
+            contract.off('PlayerAdded', handlePlayerAdded);
+            contract.off('PlayerRemoved', handlePlayerRemoved);
+        }
+    }, [contract]);
+
 
     return {
         data,

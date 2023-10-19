@@ -20,6 +20,13 @@ export function cellLeft({ i, j }) {
     }
 }
 
+export function positionToCell(p, N) {
+    return {
+        i: Math.floor(p / N),
+        j: Math.floor(p % N),
+    }
+}
+
 export function getArrowDirection(a, b) {
     if (a.i < b.i && a.j === b.j) {
         return "r"
