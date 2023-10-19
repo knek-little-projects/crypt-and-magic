@@ -2,6 +2,12 @@
 pragma solidity ^0.8.0;
 
 contract Map {
+    event CastedSpell(address player, address target, uint spellId);
+    event Movement(address player, uint steps);
+    event SkeletonAdded(address skeleton, uint p);
+    event PlayerAdded(address player, uint p);
+    event PlayerRemoved(address player);
+
     uint256 public immutable N;
     uint256 public immutable maxSkeletons;
     bytes public obstacles;
@@ -14,16 +20,12 @@ contract Map {
     }
 
     mapping(address => CharState) public characterAddressToCharacterState;
+    mapping(address => CharState) public home;
     mapping(uint => address) public characterPositionToCharacterAddress;
     address[] public skeletonAddresses;
     address[] public characterAddresses;
 
     uint160 lastSkeletonId;
-
-    event CastedSpell(address player, address target, uint spellId);
-    event Movement(address player, uint steps);
-    event SkeletonAdded(address skeleton, uint i);
-    event PlayerAdded(address player, uint i);
 
     constructor(uint256 _N, bytes memory _obstacles, uint256 _maxSkeletons) {
         require((_N * _N) / 8 == _obstacles.length, "Data does not match expected NxN size");
@@ -45,19 +47,18 @@ contract Map {
 
     function updateSkeletons() public {
         while (skeletonAddresses.length < maxSkeletons) {
-            _addSkeleton(getCurrentRandomPositionWithoutObstacle());
-            randomState++;
+            _addSkeleton(nextRandomPositionWithoutObstacle());
         }
     }
 
     uint randomState;
 
-    function getCurrentRandomNumber() public view returns (uint) {
-        return uint(keccak256(abi.encodePacked(randomState)));
+    function _random() internal returns (uint) {
+        return uint(keccak256(abi.encodePacked(randomState++)));
     }
 
-    function getCurrentRandomPositionWithoutObstacle() public view returns (uint) {
-        uint r = getCurrentRandomNumber();
+    function nextRandomPositionWithoutObstacle() public returns (uint) {
+        uint r = _random();
         for (uint i = 0; i < N * N; i++) {
             uint p = (i + r) % (N * N);
             if (!hasObstacle(p)) {
@@ -73,30 +74,30 @@ contract Map {
         return ((uint8(obstacles[i]) >> (7 - j)) & 1) == uint8(1);
     }
 
-    function hasObstacle(uint i) public view returns (bool) {
-        if (getObstacleBit(i)) {
+    function hasObstacle(uint p) public view returns (bool) {
+        if (getObstacleBit(p)) {
             return true;
         }
-        if (characterPositionToCharacterAddress[i] != address(0)) {
+        if (characterPositionToCharacterAddress[p] != address(0)) {
             return true;
         }
         return false;
     }
 
-    function _addSkeleton(uint i) public {
+    function _addSkeleton(uint p) public {
         address skeletonAddress = address(++lastSkeletonId);
 
         characterAddressToCharacterState[skeletonAddress] = CharState({
             damage: 0,
             direction: 0,
-            position: i,
+            position: p,
             asset: 0
         });
         skeletonAddresses.push(skeletonAddress);
         characterAddresses.push(skeletonAddress);
-        characterPositionToCharacterAddress[i] = skeletonAddress;
+        characterPositionToCharacterAddress[p] = skeletonAddress;
 
-        emit SkeletonAdded(skeletonAddress, i);
+        emit SkeletonAdded(skeletonAddress, p);
     }
 
     function castSpell(uint spellId, address target) public {
@@ -107,9 +108,49 @@ contract Map {
         emit Movement(msg.sender, steps);
     }
 
-    function addPlayer(uint i) public {
-        // require(characterAddressToCharacterState[msg.sender].damage == 0, "Player already added");
-        // characterAddressToCharacterState[msg.sender] = CharState({damage: 0, direction: 0, position: i});
-        // emit PlayerAdded(msg.sender, i);
+    function isHome() internal view returns (bool) {
+        return home[msg.sender].asset != 0;
+    }
+
+    function isOnMap() internal view returns (bool) {
+        return characterAddressToCharacterState[msg.sender].asset != 0;
+    }
+
+    function teleportIn() external {
+        uint p = nextRandomPositionWithoutObstacle();
+
+        if (isHome()) {
+            characterAddressToCharacterState[msg.sender] = home[msg.sender];
+            characterAddressToCharacterState[msg.sender].position = p;
+            delete home[msg.sender];
+        } else {
+            require(!isOnMap());
+            characterAddressToCharacterState[msg.sender] = CharState({
+                damage: 0,
+                direction: 0,
+                position: p,
+                asset: 1
+            });
+        }
+
+        characterAddresses.push(msg.sender);
+        characterPositionToCharacterAddress[p] = msg.sender;
+        emit PlayerAdded(msg.sender, p);
+    }
+
+    function teleportOut() external {
+        require(!isHome() && isOnMap());
+        CharState memory state = characterAddressToCharacterState[msg.sender];
+        delete characterPositionToCharacterAddress[state.position];
+        delete characterAddressToCharacterState[msg.sender];
+        home[msg.sender] = state;
+        for (uint i = 0; i < characterAddresses.length; i++) {
+            if (characterAddresses[i] == msg.sender) {
+                characterAddresses[i] = characterAddresses[characterAddresses.length - 1];
+                characterAddresses.pop();
+                break;
+            }
+        }
+        emit PlayerRemoved(msg.sender);
     }
 }

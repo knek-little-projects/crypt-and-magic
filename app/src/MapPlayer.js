@@ -30,12 +30,13 @@ export default function MapPlayer() {
     const { assets, getAssetById } = useAssets()
     const magicSpells = assets.filter(a => a.type === SPELLS).map(asset => new Spell({ asset, size: 1 }))
 
-    const { data } = useOnchainData({ autoload: true })
+    const { data, contract, account } = useOnchainData({ autoload: true })
+
     function getPlayer() {
-        return data.map.findChar("wizard")
+        return data.map.findChar(account)
     }
 
-    const player = getPlayer()
+    const player = window.$player = getPlayer()
 
     useEffect(() => {
         try {
@@ -251,33 +252,61 @@ export default function MapPlayer() {
         )
     }
 
+    async function teleportIn() {
+        await contract.teleportIn()
+    }
+
+    async function teleportOut() {
+        await contract.teleportOut()
+    }
+
     return (
         <>
-            {player &&
-                <div>
-                    <button
-                        disabled={runEmulation}
-                        style={{ height: "40px" }}
-                        onClick={() => {
-                            data.map.setSteps([])
-                            data.map.clearSpells()
-                            data.commit()
-                            setMoves([])                    
-                            setSelectedSpell(null)
-                        }}>
-                        CLEAR
-                    </button>
-                    <div className="vr" />
-                    {magicButtons}
-                </div>
+            {
+                account &&
+                <p>Connected Account: {account}</p>
+                ||
+                <div>Unlock MetaMask and reload the page</div>
             }
-            <Map
-                hoverImageUrl={hoverImageUrl}
-                hoverSize={hoverSize}
-                mapSize={data.mapSize}
-                getItems={data.getItems}
-                onClick={onClick}
-            />
+            {
+                contract &&
+                <>
+                    {
+                        player 
+                        &&
+                        <button onClick={teleportOut}>Teleport out</button>
+                        ||
+                        <button onClick={teleportIn}>Teleport in</button>
+                    }
+                    <br />
+                    <br />
+                    {player &&
+                        <div>
+                            <button
+                                disabled={runEmulation}
+                                style={{ height: "40px" }}
+                                onClick={() => {
+                                    data.map.setSteps([])
+                                    data.map.clearSpells()
+                                    data.commit()
+                                    setMoves([])
+                                    setSelectedSpell(null)
+                                }}>
+                                CLEAR
+                            </button>
+                            <div className="vr" />
+                            {magicButtons}
+                        </div>
+                    }
+                    <Map
+                        hoverImageUrl={hoverImageUrl}
+                        hoverSize={hoverSize}
+                        mapSize={data.mapSize}
+                        getItems={data.getItems}
+                        onClick={onClick}
+                    />
+                </>
+            }
         </>
     )
 }
