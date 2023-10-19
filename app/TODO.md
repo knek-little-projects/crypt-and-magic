@@ -1,12 +1,11 @@
 Thursday
-
-- [ ] save map to the blockchain (factory and registry)
-- [ ] load map from the blockchain
+- [x] skel appears randomly on the map
+- [x] save and load map on chain (skeletons, players)
+- [ ] player appear on the map randomly (buttons TELEPORT IN and OUT)
 
 - [ ] write engine in solidity (player state, movements and casts)
 - [ ] refactor engine out
 - [ ] pick up events from the blockchain and update the local data for the map
-- [ ] fully on-chain game where player appears on the map randomly (buttons TELEPORT IN and OUT)
 
 - [ ] combobox to select engine (emulation vs the blockchain)
 

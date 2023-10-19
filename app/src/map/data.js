@@ -10,7 +10,7 @@ function key({ i, j }) {
 export default function useMapData() {
 
     const { getAssetById } = useAssets()
-    const mapSize = 16
+    const mapSize = 8
     const defaultBackgroundId = "grass"
 
     class Map {

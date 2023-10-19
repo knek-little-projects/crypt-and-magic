@@ -15,7 +15,8 @@ export default function* (map, cell) {
 
         const children = (
             <div className='debug coordinates'>
-                {cell.i},{cell.j},{asset.id}
+                {/* {cell.i},{cell.j},{asset.id} */}
+                {cell.i * mapSize + cell.j}
             </div>
         )
         yield { children }

@@ -23,7 +23,7 @@ function MapEditorBrushButton({ src, onClick, children }) {
 export default function MapEditor() {
     const data = useMapData()
     const N = data.mapSize
-    const { assets, getImageUrlById, findAssetById } = useAssets()
+    const { assets, getImageUrlById, findAssetById, getAssetById } = useAssets()
     const [brush, setBrush] = useState({ id: "grass", size: 1 })
     const [hoverImageUrl, setHoverImageUrl] = useState(null)
     const [hoverStyle, setHoverStyle] = useState({})
@@ -138,7 +138,7 @@ export default function MapEditor() {
 
     useEffect(() => {
         setInputContractAddress(localStorage.getItem("lastContractAddress"))
-        
+
         try {
             data.reactLoadFromLocalStorage()
         } catch (e) {
@@ -153,7 +153,8 @@ export default function MapEditor() {
     async function deployContract() {
         // const obstacles = ethers.utils.formatBytes32String("0x0");
         const obstacles = convertMatrixToBytes(N, cell => data.map.getBackgroundAt(cell).asset.isObstacle)
-        setContract(await deployMap({ signer, N, obstacles }))
+        const maxSkeletons = 3
+        setContract(await deployMap({ signer, N, obstacles, maxSkeletons }))
     }
 
     useEffect(() => {
@@ -165,7 +166,8 @@ export default function MapEditor() {
         setInputContractAddress(contract.address)
         localStorage.setItem("lastContractAddress", contract.address)
 
-        contract.obstacles().then(obstacles => {
+        async function fetchData() {
+            const obstacles = await contract.obstacles()
             const f = convertBytesToMatrix(N, obstacles)
 
             data.map.clear()
@@ -177,8 +179,26 @@ export default function MapEditor() {
                 }
             }
 
+            const addrs = await contract.getCharacterAddresses()
+            for (const addr of addrs) {
+                const state = await contract.characterAddressToCharacterState(addr)
+
+                const i = Math.floor(state.position / N)
+                const j = Math.floor(state.position % N)
+                data.map.addChar({
+                    id: addr,
+                    asset: getAssetById(state.asset === 0 ? "skel-mage" : "wizard"),
+                    health: 255 - state.damage,
+                    direction: -1 + state.direction,
+                    cell: { i, j },
+                })
+            }
+
             data.commit()
-        })
+        }
+
+        fetchData()
+
     }, [contract])
 
     const [inputContractAddress, setInputContractAddress] = useState("")
