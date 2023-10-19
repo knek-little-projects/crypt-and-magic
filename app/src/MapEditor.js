@@ -1,15 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import useAssets from './assets'
 
-import { ethers, providers } from 'ethers';
-import { convertBytesToMatrix, convertMatrixToBytes, deployMap, fetchMap, useWallet } from "./wallet"
-
 import "./App.scss"
 import useMapData from './map/data';
 import Map from "./Map"
 import { BACKGROUND, CHARACTERS } from './map/layer-types';
 import * as cellFuncs from "./map/cell-funcs"
 import uuidv4 from "./uuid"
+import { useOnchainData } from './map/onchain-data';
 
 function MapEditorBrushButton({ src, onClick, children }) {
     return (
@@ -21,7 +19,8 @@ function MapEditorBrushButton({ src, onClick, children }) {
 }
 
 export default function MapEditor() {
-    const data = useMapData()
+    const { data, contract, account, deployContract, loadContract } = useOnchainData({ autoload: true })
+    const [inputContractAddress, setInputContractAddress] = useState("")
     const N = data.mapSize
     const { assets, getImageUrlById, findAssetById, getAssetById } = useAssets()
     const [brush, setBrush] = useState({ id: "grass", size: 1 })
@@ -137,75 +136,10 @@ export default function MapEditor() {
     }
 
     useEffect(() => {
-        setInputContractAddress(localStorage.getItem("lastContractAddress"))
-
-        try {
-            data.reactLoadFromLocalStorage()
-        } catch (e) {
-
+        if (contract) {
+            setInputContractAddress(contract.address)
         }
-    }, [])
-
-
-    const { signer, account } = window.$wallet = useWallet()
-    const [contract, setContract] = useState(null)
-
-    async function deployContract() {
-        // const obstacles = ethers.utils.formatBytes32String("0x0");
-        const obstacles = convertMatrixToBytes(N, cell => data.map.getBackgroundAt(cell).asset.isObstacle)
-        const maxSkeletons = 3
-        setContract(await deployMap({ signer, N, obstacles, maxSkeletons }))
-    }
-
-    useEffect(() => {
-        if (!contract) {
-            return
-        }
-
-        console.log(window.$contract = contract)
-        setInputContractAddress(contract.address)
-        localStorage.setItem("lastContractAddress", contract.address)
-
-        async function fetchData() {
-            const obstacles = await contract.obstacles()
-            const f = convertBytesToMatrix(N, obstacles)
-
-            data.map.clear()
-            for (let i = 0; i < N; i++) {
-                for (let j = 0; j < N; j++) {
-                    if (f({ i, j })) {
-                        data.map.setBackgroundIdAt({ i, j }, "water")
-                    }
-                }
-            }
-
-            const addrs = await contract.getCharacterAddresses()
-            for (const addr of addrs) {
-                const state = await contract.characterAddressToCharacterState(addr)
-
-                const i = Math.floor(state.position / N)
-                const j = Math.floor(state.position % N)
-                data.map.addChar({
-                    id: addr,
-                    asset: getAssetById(state.asset === 0 ? "skel-mage" : "wizard"),
-                    health: 255 - state.damage,
-                    direction: -1 + state.direction,
-                    cell: { i, j },
-                })
-            }
-
-            data.commit()
-        }
-
-        fetchData()
-
     }, [contract])
-
-    const [inputContractAddress, setInputContractAddress] = useState("")
-
-    async function loadContract() {
-        setContract(await fetchMap({ signer, address: inputContractAddress }))
-    }
 
     return (
         <div className='MapEditor'>
@@ -214,8 +148,8 @@ export default function MapEditor() {
                 account &&
                 <div>
                     <p>Connected Account: {account}</p>
-                    <button onClick={deployContract}>Deploy Map Contract</button>
-                    <button onClick={loadContract}>Load</button>
+                    <button onClick={() => deployContract()}>Deploy Map Contract</button>
+                    <button onClick={() => loadContract(inputContractAddress)}>Load</button>
                     <input type="text" value={inputContractAddress} onInput={e => setInputContractAddress(e.target.value)} style={{ width: "400px" }} />
                 </div>
                 ||

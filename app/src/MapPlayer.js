@@ -8,19 +8,6 @@ import useInterval from "./react-interval"
 import useAssets from "./assets"
 import uuidv4 from "./uuid"
 
-function getArrowDirection(a, b) {
-    if (a.i < b.i && a.j === b.j) {
-        return "r"
-    } else if (a.i > b.i && a.j === b.j) {
-        return "l"
-    } else if (a.j < b.j && a.i === b.i) {
-        return "b"
-    } else if (a.j > b.j && a.i === b.i) {
-        return "t"
-    } else {
-        throw Error(`Arrow direction undefined since the points are identical: ${JSON.stringify([a, b])}`)
-    }
-}
 
 class Spell {
     constructor({ asset, size }) {
@@ -164,7 +151,7 @@ export default function MapPlayer() {
 
         const colorType = "g"
         for (let i = 0; i < cells.length - 1; i++) {
-            const id = colorType + getArrowDirection(cells[i], cells[i + 1])
+            const id = colorType + cellFuncs.getArrowDirection(cells[i], cells[i + 1])
             ids.push(id)
         }
 
