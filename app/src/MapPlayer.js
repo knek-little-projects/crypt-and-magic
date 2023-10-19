@@ -7,6 +7,7 @@ import * as cellFuncs from "./map/cell-funcs"
 import useInterval from "./react-interval"
 import useAssets from "./assets"
 import uuidv4 from "./uuid"
+import { useOnchainData } from "./map/onchain-data"
 
 
 class Spell {
@@ -29,7 +30,7 @@ export default function MapPlayer() {
     const { assets, getAssetById } = useAssets()
     const magicSpells = assets.filter(a => a.type === SPELLS).map(asset => new Spell({ asset, size: 1 }))
 
-    const data = useMapData()
+    const { data } = useOnchainData({ autoload: true })
     function getPlayer() {
         return data.map.findChar("wizard")
     }
