@@ -1,64 +1,125 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract Map {
-    event CastedSpell(address player, address target, uint spellId);
-    event Movement(address player, uint steps);
-    event SkeletonAdded(address skeleton, uint p);
-    event PlayerAdded(address player, uint p);
-    event PlayerRemoved(address player);
-
-    uint256 public immutable N;
-    uint256 public immutable maxSkeletons;
-    bytes public obstacles;
-
-    struct CharState {
-        uint position;
-        uint8 damage;
-        uint8 asset;
-        uint8 direction;
+library BitMap {
+    function isSet(uint8[] storage a, uint p) internal view returns (bool) {
+        uint i = p / 8;
+        uint j = p % 8;
+        return ((a[i] >> (7 - j)) & 1) == 1;
     }
 
-    mapping(address => CharState) public characterAddressToCharacterState;
-    mapping(address => CharState) public home;
-    mapping(uint => address) public characterPositionToCharacterAddress;
-    address[] public skeletonAddresses;
-    address[] public characterAddresses;
-
-    uint160 lastSkeletonId;
-
-    constructor(uint256 _N, bytes memory _obstacles, uint256 _maxSkeletons) {
-        require((_N * _N) / 8 == _obstacles.length, "Data does not match expected NxN size");
-
-        N = _N;
-        obstacles = _obstacles;
-        maxSkeletons = _maxSkeletons;
-
-        updateSkeletons();
+    function set(uint8[] storage a, uint p) internal {
+        uint i = p / 8;
+        uint8 j = uint8(p % 8);
+        uint8 x = uint8(1 << j);
+        a[i] = a[i] | x;
     }
 
-    function getSkeletonAddresses() public view returns (address[] memory) {
-        return skeletonAddresses;
+    function unset(uint8[] storage a, uint p) internal {
+        uint i = p / 8;
+        uint8 j = uint8(p % 8);
+        uint8 x = uint8(1 << j);
+        a[i] = a[i] & ~x;
+    }
+}
+
+library Set {
+    function remove(address[] storage a, address item) internal {
+        for (uint i = 0; i > a.length; i++) {
+            if (a[i] == item) {
+                a[i] = a[a.length - 1];
+                a.pop();
+            }
+        }
+    }
+}
+
+abstract contract Obstacles {
+    uint public N;
+    uint8[] public obstacles;
+    using BitMap for uint8[];
+
+    function hasObstacle(uint p) internal view returns (bool) {
+        return obstacles.isSet(p);
     }
 
-    function getCharacterAddresses() public view returns (address[] memory) {
-        return characterAddresses;
+    function setObstacle(uint p) internal {
+        obstacles.set(p);
     }
 
-    function updateSkeletons() public {
-        while (skeletonAddresses.length < maxSkeletons) {
-            _addSkeleton(nextRandomPositionWithoutObstacle());
+    function unsetObstacle(uint p) internal {
+        obstacles.unset(p);
+    }
+}
+
+uint constant STEP_RIGHT = 0; // 0b00
+uint constant STEP_DOWN = 1; // 0b01
+uint constant STEP_LEFT = 2; // 0b10
+uint constant STEP_UP = 3; // 0b11
+uint constant STEP_VERTICAL = 1;
+
+abstract contract Movement is Obstacles {
+    function getStepDelta(uint step) internal view returns (int) {
+        if (step == STEP_UP) {
+            return -1;
+        } else if (step == STEP_DOWN) {
+            return 1;
+        } else if (step == STEP_LEFT) {
+            return -int(N);
+        } else if (step == STEP_RIGHT) {
+            return int(N);
+        } else {
+            revert();
         }
     }
 
-    uint randomState;
-
-    function _random() internal returns (uint) {
-        return uint(keccak256(abi.encodePacked(randomState++)));
+    function isOutside(
+        int startPosition,
+        uint step,
+        int nextPosition
+    ) internal view returns (bool) {
+        if (step & STEP_VERTICAL == 1) {
+            if (startPosition / int(N) != nextPosition / int(N)) {
+                return true;
+            }
+        } else {
+            if (nextPosition < 0) {
+                return true;
+            }
+            if (uint(nextPosition) >= N * N) {
+                return true;
+            }
+        }
+        return false;
     }
 
+    function getNextPositionAfterStep(
+        int startPosition,
+        uint step
+    ) internal view returns (int nextPosition) {
+        nextPosition = startPosition + getStepDelta(step);
+
+        if (isOutside(startPosition, step, nextPosition)) {
+            return startPosition;
+        }
+
+        if (hasObstacle(uint(startPosition))) {
+            return startPosition;
+        }
+    }
+}
+
+contract Random {
+    uint randomState;
+
+    function random() internal returns (uint) {
+        return uint(keccak256(abi.encodePacked(randomState++)));
+    }
+}
+
+abstract contract RandomPosition is Random, Obstacles {
     function nextRandomPositionWithoutObstacle() public returns (uint) {
-        uint r = _random();
+        uint r = random();
         for (uint i = 0; i < N * N; i++) {
             uint p = (i + r) % (N * N);
             if (!hasObstacle(p)) {
@@ -67,90 +128,141 @@ contract Map {
         }
         revert();
     }
+}
 
-    function getObstacleBit(uint p) internal view returns (bool) {
-        uint i = p / 8;
-        uint j = p % 8;
-        return ((uint8(obstacles[i]) >> (7 - j)) & 1) == uint8(1);
+struct Skeleton {
+    uint position;
+    uint step;
+}
+
+abstract contract Skeletons is Obstacles, RandomPosition {
+    event SkeletonAdded(address skeleton, uint p);
+    event SkeletonRemoved(address skeleton, uint p);
+
+    mapping(address => Skeleton) public skeletonAddressToState;
+    address[] public skeletonAddresses;
+    uint256 public maxSkeletons;
+    uint160 lastSkeletonId;
+
+    using Set for address[];
+
+    function getSkeletonAddresses() public view returns (address[] memory) {
+        return skeletonAddresses;
     }
 
-    function hasObstacle(uint p) public view returns (bool) {
-        if (getObstacleBit(p)) {
-            return true;
-        }
-        if (characterPositionToCharacterAddress[p] != address(0)) {
-            return true;
-        }
-        return false;
-    }
+    function _addSkeleton(uint p) internal {
+        require(!hasObstacle(p));
 
-    function _addSkeleton(uint p) public {
         address skeletonAddress = address(++lastSkeletonId);
 
-        characterAddressToCharacterState[skeletonAddress] = CharState({
-            damage: 0,
-            direction: 0,
-            position: p,
-            asset: 0
-        });
+        skeletonAddressToState[skeletonAddress] = Skeleton({position: p, step: STEP_RIGHT});
         skeletonAddresses.push(skeletonAddress);
-        characterAddresses.push(skeletonAddress);
-        characterPositionToCharacterAddress[p] = skeletonAddress;
+        setObstacle(p);
 
         emit SkeletonAdded(skeletonAddress, p);
     }
 
-    function castSpell(uint spellId, address target) public {
-        emit CastedSpell(msg.sender, target, spellId);
+    function spawnSkeletons() public {
+        while (skeletonAddresses.length < maxSkeletons) {
+            _addSkeleton(nextRandomPositionWithoutObstacle());
+        }
     }
 
-    function move(uint steps) public {
-        emit Movement(msg.sender, steps);
+    function killSkeleton(address skeletonAddress) internal {
+        skeletonAddresses.remove(skeletonAddress);
+        uint p = skeletonAddressToState[skeletonAddress].position;
+        unsetObstacle(p);
+        delete skeletonAddressToState[skeletonAddress];
+        emit SkeletonRemoved(skeletonAddress, p);
     }
+}
 
-    function isHome() internal view returns (bool) {
-        return home[msg.sender].asset != 0;
-    }
+struct Player {
+    uint position;
+    uint nonce;
+    uint damage;
+    bool isActive;
+}
 
-    function isOnMap() internal view returns (bool) {
-        return characterAddressToCharacterState[msg.sender].asset != 0;
+abstract contract Players is Obstacles, RandomPosition {
+    event PlayerAdded(address player, uint p);
+    event PlayerRemoved(address player, uint p);
+    event PlayerMoved(address player, uint steps);
+
+    mapping(address => Player) public playerAddressToState;
+    address[] public playerAddresses;
+
+    using Set for address[];
+
+    function getPlayerAddresses() public view returns (address[] memory) {
+        return playerAddresses;
     }
 
     function teleportIn() external {
+        Player storage player = playerAddressToState[msg.sender];
+
+        require(!player.isActive);
+
         uint p = nextRandomPositionWithoutObstacle();
+        player.isActive = true;
+        player.position = p;
+        playerAddresses.push(msg.sender);
+        setObstacle(p);
 
-        if (isHome()) {
-            characterAddressToCharacterState[msg.sender] = home[msg.sender];
-            characterAddressToCharacterState[msg.sender].position = p;
-            delete home[msg.sender];
-        } else {
-            require(!isOnMap());
-            characterAddressToCharacterState[msg.sender] = CharState({
-                damage: 0,
-                direction: 0,
-                position: p,
-                asset: 1
-            });
-        }
-
-        characterAddresses.push(msg.sender);
-        characterPositionToCharacterAddress[p] = msg.sender;
         emit PlayerAdded(msg.sender, p);
     }
 
     function teleportOut() external {
-        require(!isHome() && isOnMap());
-        CharState memory state = characterAddressToCharacterState[msg.sender];
-        delete characterPositionToCharacterAddress[state.position];
-        delete characterAddressToCharacterState[msg.sender];
-        home[msg.sender] = state;
-        for (uint i = 0; i < characterAddresses.length; i++) {
-            if (characterAddresses[i] == msg.sender) {
-                characterAddresses[i] = characterAddresses[characterAddresses.length - 1];
-                characterAddresses.pop();
-                break;
-            }
-        }
-        emit PlayerRemoved(msg.sender);
+        Player storage player = playerAddressToState[msg.sender];
+
+        require(player.isActive);
+
+        player.isActive = false;
+        playerAddresses.remove(msg.sender);
+        unsetObstacle(player.position);
+
+        emit PlayerRemoved(msg.sender, player.position);
     }
+}
+
+contract Map is Obstacles, Skeletons, Players {
+    constructor(uint256 _N, uint8[] memory _obstacles, uint256 _maxSkeletons) {
+        require((_N * _N) / 8 == _obstacles.length, "N");
+
+        N = _N;
+        obstacles = _obstacles;
+        maxSkeletons = _maxSkeletons;
+
+        spawnSkeletons();
+    }
+
+    // function move(uint nonce, uint stepsToDo) public {
+    //     require(nonce == characterAddressToNonce[msg.sender], "Nonce");
+
+    //     CharState storage player = characterAddressToCharacterState[msg.sender];
+    //     CharState memory skeletons = new CharState[](skeletonAddresses.length);
+    //     int currentPosition = int(player.position);
+
+    //     uint stepsDone = 0;
+    //     for (uint i = 0; i < 128; i++) {
+    //         uint step = stepsToDo & 3;
+
+    //         int nextPosition = getPositionDelta(currentPosition, step);
+    //         if (nextPosition == currentPosition) {
+    //             break;
+    //         }
+
+    //         currentPosition = nextPosition;
+    //         stepsToDo = stepsToDo >> 2;
+    //         stepsDone = (stepsDone << 2) | step;
+
+    //         // skeletons move
+    //         for (uint j = 0; j < skeletonPositions.length; j++) {}
+    //     }
+
+    //     player.position = uint(currentPosition);
+
+    //     emit Movement(msg.sender, stepsDone);
+    // }
+
 }
