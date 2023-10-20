@@ -93,15 +93,12 @@ export function convertMatrixToBytes(N, f) {
     }
 
     // Convert the array of bytes to a bytes format using ethers
-    const bytes = ethers.utils.concat(bytesArr);
+    // const bytes = ethers.utils.concat(bytesArr);
 
-    return bytes
+    return bytesArr
 }
 
-export function convertBytesToMatrix(N, bytes) {
-    if (!parseInt(N)) {
-        throw Error()
-    }
+export function bytesToBits(bytes) {
     bytes = ethers.utils.arrayify(bytes)
 
     let bits = '';
@@ -111,8 +108,16 @@ export function convertBytesToMatrix(N, bytes) {
         bits += byteBits
     }
 
-    console.log(bits)
+    return bits
+}
 
+export function convertBytesToMatrix(N, bytes) {
+    if (!parseInt(N)) {
+        throw Error()
+    }
+    
+    const bits = bytesToBits(bytes)
+    
     // Now, recreate the function f() using the bits
     return function f({ i, j }) {
         let index = i * N + j;

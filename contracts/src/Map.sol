@@ -4,33 +4,44 @@ pragma solidity ^0.8.0;
 library BitMap {
     function isSet(uint8[] storage a, uint p) internal view returns (bool) {
         uint i = p / 8;
-        uint j = p % 8;
-        return ((a[i] >> (7 - j)) & 1) == 1;
+        uint j = 7 - p % 8;
+        return ((a[i] >> j) & 1) == 1;
     }
 
     function set(uint8[] storage a, uint p) internal {
         uint i = p / 8;
-        uint8 j = uint8(p % 8);
-        uint8 x = uint8(1 << j);
-        a[i] = a[i] | x;
+        uint j = 7 - p % 8;
+        uint x = 1 << j;
+        a[i] = a[i] | uint8(x);
     }
 
     function unset(uint8[] storage a, uint p) internal {
         uint i = p / 8;
-        uint8 j = uint8(p % 8);
-        uint8 x = uint8(1 << j);
-        a[i] = a[i] & ~x;
+        uint j = 7 - p % 8;
+        uint x = 1 << j;
+        a[i] = a[i] & uint8(~x);
+    }
+}
+
+library MemoryBitMap {
+    function unset(uint8[] memory a, uint p) internal pure {
+        uint i = p / 8;
+        uint j = 7 - p % 8;
+        uint x = 1 << j;
+        a[i] = a[i] & uint8(~x);
     }
 }
 
 library Set {
     function remove(address[] storage a, address item) internal {
-        for (uint i = 0; i > a.length; i++) {
+        for (uint i = 0; i < a.length; i++) {
             if (a[i] == item) {
                 a[i] = a[a.length - 1];
                 a.pop();
+                return;
             }
         }
+        revert("R");
     }
 }
 
@@ -49,6 +60,10 @@ abstract contract Obstacles {
 
     function unsetObstacle(uint p) internal {
         obstacles.unset(p);
+    }
+
+    function getObstacles() external view returns (uint8[] memory) {
+        return obstacles;
     }
 }
 
@@ -226,6 +241,8 @@ abstract contract Players is Obstacles, RandomPosition {
 }
 
 contract Map is Obstacles, Skeletons, Players {
+    uint public immutable version = 1;
+
     constructor(uint256 _N, uint8[] memory _obstacles, uint256 _maxSkeletons) {
         require((_N * _N) / 8 == _obstacles.length, "N");
 
@@ -234,6 +251,41 @@ contract Map is Obstacles, Skeletons, Players {
         maxSkeletons = _maxSkeletons;
 
         spawnSkeletons();
+    }
+
+    function getFullState()
+        external
+        view
+        returns (
+            uint8[] memory obstacles_,
+            address[] memory skeletonAddresses_,
+            address[] memory playerAddresses_,
+            Skeleton[] memory skeletons_,
+            Player[] memory players_
+        )
+    {
+        obstacles_ = obstacles;
+        skeletonAddresses_ = skeletonAddresses;
+        playerAddresses_ = playerAddresses;
+
+        skeletons_ = new Skeleton[](skeletonAddresses_.length);
+        for (uint256 i = 0; i < skeletonAddresses_.length; i++) {
+            skeletons_[i] = skeletonAddressToState[skeletonAddresses_[i]];
+        }
+
+        players_ = new Player[](playerAddresses_.length);
+        for (uint256 i = 0; i < playerAddresses_.length; i++) {
+            players_[i] = playerAddressToState[playerAddresses_[i]];
+        }
+
+        // Unset obstacles based on skeletons and players
+        for (uint256 i = 0; i < skeletons_.length; i++) {
+            MemoryBitMap.unset(obstacles_, skeletons_[i].position);
+        }
+
+        for (uint256 i = 0; i < players_.length; i++) {
+            MemoryBitMap.unset(obstacles_, players_[i].position);
+        }
     }
 
     // function move(uint nonce, uint stepsToDo) public {
@@ -264,5 +316,4 @@ contract Map is Obstacles, Skeletons, Players {
 
     //     emit Movement(msg.sender, stepsDone);
     // }
-
 }
