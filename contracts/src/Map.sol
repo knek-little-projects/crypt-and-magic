@@ -71,7 +71,72 @@ contract Map is Obstacles, Skeletons, Players, Movement {
     event logInt(int x);
     event logUint(uint x);
 
-    function move(uint nonce, uint stepsToDo) life public {
+    function _findPlayerAt(uint p) internal view returns (address) {
+        for (uint i = 0; i < playerAddresses.length; i++) {
+            if (playerAddressToState[playerAddresses[i]].position == p) {
+                return playerAddresses[i];
+            }
+        }
+        return address(0);
+    }
+
+    function _skeletonAttack(address skeletonAddress) internal returns (bool) {
+        Skeleton storage skeleton = skeletonAddressToState[skeletonAddress];
+
+        int startPosition = int(skeleton.position);
+        for (uint step = 0; step < 8; step++) {
+            int nextPosition = startPosition + getStepDelta(step);
+
+            if (isOutside(startPosition, step, nextPosition)) {
+                continue;
+            }
+
+            if (!hasObstacle(uint(nextPosition))) {
+                continue;
+            }
+
+            address player = _findPlayerAt(uint(nextPosition));
+            if (player == address(0)) {
+                continue;
+            }
+
+            emit SpellCasted(1, player);
+            return true;
+        }
+        return false;
+    }
+
+    function _skeletonMove(address skeletonAddress) internal {
+        Skeleton storage skeleton = skeletonAddressToState[skeletonAddress];
+
+        int startPosition = int(skeleton.position);
+        int nextPosition;
+        uint step = skeleton.step;
+        for (uint i = 0; i < 4; i++) {
+            step = (step + i) % 4;
+            nextPosition = getNextPositionAfterStep(startPosition, step);
+            if (nextPosition != startPosition) {
+                break;
+            }
+        }
+        if (nextPosition != startPosition) {
+            unsetObstacle(skeleton.position);
+            skeleton.position = uint(nextPosition);
+            setObstacle(skeleton.position);
+            skeleton.step = step;
+            emit SkeletonMoved(skeletonAddress, uint(nextPosition));
+        }
+    }
+
+    function _moveSkeletons() internal {
+        for (uint j = 0; j < skeletonAddresses.length; j++) {
+            if (!_skeletonAttack(skeletonAddresses[j])) {
+                _skeletonMove(skeletonAddresses[j]);
+            }
+        }
+    }
+
+    function move(uint nonce, uint stepsToDo) public life {
         Player storage player = playerAddressToState[msg.sender];
         require(player.isActive);
         require(nonce == player.nonce, "Nonce");
@@ -92,19 +157,19 @@ contract Map is Obstacles, Skeletons, Players, Movement {
             stepsToDo = stepsToDo >> 2;
             stepsDone = (stepsDone << 2) | step;
 
-            // skeletons move
-            // for (uint j = 0; j < skeletonPositions.length; j++) {}
+            unsetObstacle(player.position);
+            player.position = uint(currentPosition);
+            setObstacle(player.position);
+
+            _moveSkeletons();
         }
 
-        unsetObstacle(player.position);
-        player.position = uint(currentPosition);
-        setObstacle(player.position);
         player.nonce++;
         emit PlayerMoved(msg.sender, stepsDone, player.position);
     }
 
-    function castSpell(uint asset, address target) life external {
-        if (isAddressInSkeletonRange(target)) {
+    function castSpell(uint asset, address target) external life {
+        if (isSkeletonAddress(target)) {
             killSkeleton(target);
         }
         emit SpellCasted(asset, target);

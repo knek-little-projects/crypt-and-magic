@@ -1,8 +1,9 @@
 Sat
-- [ ] skeleton moves
-- [ ] skeleton casts
 - [ ] player dies
 - [ ] test multiple players
+
+- [ ] slow movement
+- [ ] animate magic
 
 - [ ] gold mine
 - [ ] mint token

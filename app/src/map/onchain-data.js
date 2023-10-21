@@ -200,7 +200,7 @@ export function useOnchainData({ autoload }) {
         }
 
         async function handleSkeletonAdded(id, p) {
-  
+
             const cell = cellFuncs.positionToCell(p, N)
 
             data.map.addChar({
@@ -210,6 +210,16 @@ export function useOnchainData({ autoload }) {
                 step: 0,
                 cell,
             })
+        }
+
+        async function handleSkeletonMoved(id, p) {
+            console.log("SkeletonMoved", ...arguments)
+            const skeleton = data.map.findChar(id)
+            if (!skeleton) {
+                console.warn("Skeleton not found on the map", id)
+            }
+            skeleton.cell = cellFuncs.positionToCell(p, N)
+            data.commit()
         }
 
         const disable = () => {
@@ -222,6 +232,7 @@ export function useOnchainData({ autoload }) {
             contract.off('logUint', log);
             contract.off('SpellCasted', handleSpellCasted);
             contract.off('SkeletonAdded', handleSkeletonAdded);
+            contract.off('SkeletonMoved', handleSkeletonMoved);
         }
 
         if (!contract) {
@@ -238,6 +249,7 @@ export function useOnchainData({ autoload }) {
         contract.on('SpellCasted', handleSpellCasted);
         contract.on('SkeletonRemoved', handleSkeletonRemoved);
         contract.on('SkeletonAdded', handleSkeletonAdded);
+        contract.on('SkeletonMoved', handleSkeletonMoved);
         contract.on('log', log);
         contract.on('logInt', log);
         contract.on('logUint', log);

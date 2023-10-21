@@ -6,6 +6,7 @@ import "./consts.sol";
 import "./Obstacles.sol";
 import "./RandomPosition.sol";
 import "./Life.sol";
+import "./Movement.sol";
 
 struct Skeleton {
     uint position;
@@ -15,6 +16,7 @@ struct Skeleton {
 abstract contract Skeletons is Obstacles, RandomPosition, Life {
     event SkeletonAdded(address skeleton, uint p);
     event SkeletonRemoved(address skeleton, uint p);
+    event SkeletonMoved(address skeleton, uint p);
 
     mapping(address => Skeleton) public skeletonAddressToState;
     address[] public skeletonAddresses;
@@ -31,9 +33,26 @@ abstract contract Skeletons is Obstacles, RandomPosition, Life {
         return skeletonAddresses;
     }
 
-    function isAddressInSkeletonRange(address target) internal view returns (bool) {
-        return uint160(target) <= lastSkeletonId;
+    function isSkeletonAddress(address potentialSkeletonAddress) internal view returns (bool) {
+        return uint160(potentialSkeletonAddress) <= lastSkeletonId;
     }
+
+    // function _getSkeletonNextPosition(int currentPosition, uint stepToDo) internal view returns (int nextPosition, uint stepDone) {
+    //     for (uint i=0; i<4; i++) {
+    //         stepDone = (stepToDo + i) % 4;
+    //         nextPosition = getNextPositionAfterStep(currentPosition, stepDone);
+    //         if (nextPosition != currentPosition) {
+    //             break;
+    //         }
+    //     }
+    // }
+
+    // function _moveSkeleton(address skeletonAddress) internal {
+    //     Skeleton storage skeleton = skeletonAddressToState[skeletonAddress];
+
+    //     int currentPosition = int(skeleton.position);
+    //     (int nextPosition, uint step) = _getSkeletonNextPosition(currentPosition, skeleton.step);
+    // }
 
     function _addSkeleton(uint p) internal {
         require(!hasObstacle(p));
@@ -58,7 +77,7 @@ abstract contract Skeletons is Obstacles, RandomPosition, Life {
         return startRespawnCountdown + skeletonRespawnTime < block.timestamp;
     }
 
-    function killSkeleton(address skeletonAddress) life internal {
+    function killSkeleton(address skeletonAddress) internal life {
         skeletonAddresses.remove(skeletonAddress);
         uint p = skeletonAddressToState[skeletonAddress].position;
         unsetObstacle(p);
