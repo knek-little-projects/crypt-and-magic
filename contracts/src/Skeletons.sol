@@ -26,6 +26,10 @@ abstract contract Skeletons is Obstacles, RandomPosition {
         return skeletonAddresses;
     }
 
+    function isAddressInSkeletonRange(address target) internal view returns (bool) {
+        return uint160(target) <= lastSkeletonId;
+    }
+
     function _addSkeleton(uint p) internal {
         require(!hasObstacle(p));
 

@@ -22,7 +22,7 @@ function toNumber(obj) {
 export function useOnchainData({ autoload }) {
     const data = useMapData()
     const N = data.map.getSize()
-    const { getAssetById } = useAssets()
+    const { getAssetById, findAssetById } = useAssets()
 
     const { signer, account } = useWallet()
     const [contract, setContract] = useState(null)
@@ -170,24 +170,39 @@ export function useOnchainData({ autoload }) {
             console.log("LOG", ...arguments)
         }
 
-        async function handleSpellCasted(id, p) {
+        async function handleSpellCasted(spellId, targetAddress) {
             console.log("SpellCasted", ...arguments)
-            const cell = cellFuncs.positionToCell(p, N)
-            const asset = getAssetById(id)
-            console.log("at", cell, asset)
+            // const cell = cellFuncs.positionToCell(p, N)
+            const asset = findAssetById(spellId)
+            if (!asset) {
+                console.error(`Asset ${spellId} wasn't found`)
+                return
+            }
+            // console.log("at", cell, asset)
+            const char = data.map.findChar(targetAddress)
+            if (!char) {
+                console.warn(`Spell casted for a non-existent char ${targetAddress}`)
+                return
+            }
             data.map.addSpell({
                 id: uuidv4(),
                 asset,
-                cell,
+                cell: char.cell,
                 finishTime: new Date().getTime() + 1000 * 1,
             })
             data.commit()
+        }
+
+        async function handleSkeletonRemoved(id, p) {
+            console.log("SkeletonRemoved", ...arguments)
+            data.map.removeChar({ id })
         }
 
         const disable = () => {
             contract.off('PlayerAdded', handlePlayerAdded);
             contract.off('PlayerMoved', handlePlayerMoved);
             contract.off('PlayerRemoved', handlePlayerRemoved);
+            contract.off('SkeletonRemoved', handleSkeletonRemoved);
             contract.off('log', log);
             contract.off('logInt', log);
             contract.off('logUint', log);
@@ -206,9 +221,10 @@ export function useOnchainData({ autoload }) {
         contract.on('PlayerMoved', handlePlayerMoved);
         contract.on('PlayerRemoved', handlePlayerRemoved);
         contract.on('SpellCasted', handleSpellCasted);
-        contract.on('log',log);
-        contract.on('logInt',log);
-        contract.on('logUint',log);
+        contract.on('SkeletonRemoved', handleSkeletonRemoved);
+        contract.on('log', log);
+        contract.on('logInt', log);
+        contract.on('logUint', log);
 
         return disable;
     }, [contract, mapStateLoaded]);

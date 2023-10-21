@@ -207,9 +207,9 @@ export default function MapPlayer() {
             }
 
             async function castSpell() {
-                const p = cellFuncs.cellToPosition(cell, N)
-                console.debug("to cast spell at", cell, p)
-                await contract.castSpell(0, p)
+                // const p = cellFuncs.cellToPosition(cell, N)
+                // console.debug("to cast spell at", cell, p)
+                await contract.castSpell(0, chars[0].id)
             }
 
             castSpell()
