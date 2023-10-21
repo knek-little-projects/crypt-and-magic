@@ -206,13 +206,7 @@ export default function MapPlayer() {
                 return
             }
 
-            async function castSpell() {
-                // const p = cellFuncs.cellToPosition(cell, N)
-                // console.debug("to cast spell at", cell, p)
-                await contract.castSpell(0, chars[0].id)
-            }
-
-            castSpell()
+            contract.castSpell(0, chars[0].id).catch(e => { })
             // data.map.clearSpells()
             // data.map.addSpell({
             //     id: uuidv4(),
@@ -238,7 +232,7 @@ export default function MapPlayer() {
                 const steps = packSteps(player.cell, moves)
                 await contract.move(nonce, steps)
             }
-            move()
+            move().catch(e => { })
             // setRunEmulation(true)
             return
         }
@@ -293,12 +287,12 @@ export default function MapPlayer() {
         )
     }
 
-    async function teleportIn() {
-        await contract.teleportIn()
+    function teleportIn() {
+        contract.teleportIn().catch(e => { })
     }
 
-    async function teleportOut() {
-        await contract.teleportOut()
+    function teleportOut() {
+        contract.teleportOut().catch(e => { })
     }
 
     return (
