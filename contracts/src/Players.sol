@@ -5,6 +5,7 @@ import "./libs.sol";
 import "./consts.sol";
 import "./Obstacles.sol";
 import "./RandomPosition.sol";
+import "./Life.sol";
 
 struct Player {
     uint position;
@@ -13,7 +14,7 @@ struct Player {
     bool isActive;
 }
 
-abstract contract Players is Obstacles, RandomPosition {
+abstract contract Players is Obstacles, RandomPosition, Life {
     event PlayerAdded(address player, uint p);
     event PlayerRemoved(address player, uint p);
 
@@ -26,7 +27,7 @@ abstract contract Players is Obstacles, RandomPosition {
         return playerAddresses;
     }
 
-    function teleportIn() public {
+    function teleportIn() life public {
         Player storage player = playerAddressToState[msg.sender];
 
         require(!player.isActive);
@@ -40,7 +41,7 @@ abstract contract Players is Obstacles, RandomPosition {
         emit PlayerAdded(msg.sender, p);
     }
 
-    function teleportOut() external {
+    function teleportOut() life external {
         Player storage player = playerAddressToState[msg.sender];
 
         require(player.isActive);

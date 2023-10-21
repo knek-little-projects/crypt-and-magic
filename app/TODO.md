@@ -1,7 +1,8 @@
 Sat
+- [x] skeleton dies
+- [ ] skeleton respwans
 - [ ] skeleton moves
 - [ ] skeleton casts
-- [ ] skeleton dies
 - [ ] player dies
 - [ ] test multiple players
 

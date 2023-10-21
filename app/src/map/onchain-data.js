@@ -31,7 +31,8 @@ export function useOnchainData({ autoload }) {
         // const obstacles = ethers.utils.formatBytes32String("0x0");
         const obstacles = convertMatrixToBytes(N, cell => data.map.getBackgroundAt(cell).asset.isObstacle)
         const maxSkeletons = 3
-        setContract(await deployMap({ signer, N, obstacles, maxSkeletons }))
+        const skeletonRespawnTime = 10
+        setContract(await deployMap({ signer, N, obstacles, maxSkeletons, skeletonRespawnTime }))
     }
 
     const [mapStateLoaded, setMapStateLoaded] = useState(false)
@@ -198,6 +199,19 @@ export function useOnchainData({ autoload }) {
             data.map.removeChar({ id })
         }
 
+        async function handleSkeletonAdded(id, p) {
+  
+            const cell = cellFuncs.positionToCell(p, N)
+
+            data.map.addChar({
+                id,
+                asset: getAssetById("skel-mage"),
+                damage: 0,
+                step: 0,
+                cell,
+            })
+        }
+
         const disable = () => {
             contract.off('PlayerAdded', handlePlayerAdded);
             contract.off('PlayerMoved', handlePlayerMoved);
@@ -207,6 +221,7 @@ export function useOnchainData({ autoload }) {
             contract.off('logInt', log);
             contract.off('logUint', log);
             contract.off('SpellCasted', handleSpellCasted);
+            contract.off('SkeletonAdded', handleSkeletonAdded);
         }
 
         if (!contract) {
@@ -222,6 +237,7 @@ export function useOnchainData({ autoload }) {
         contract.on('PlayerRemoved', handlePlayerRemoved);
         contract.on('SpellCasted', handleSpellCasted);
         contract.on('SkeletonRemoved', handleSkeletonRemoved);
+        contract.on('SkeletonAdded', handleSkeletonAdded);
         contract.on('log', log);
         contract.on('logInt', log);
         contract.on('logUint', log);

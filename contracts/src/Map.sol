@@ -15,12 +15,18 @@ contract Map is Obstacles, Skeletons, Players, Movement {
 
     uint public immutable version = 1;
 
-    constructor(uint256 _N, uint8[] memory _obstacles, uint256 _maxSkeletons) {
+    constructor(
+        uint256 _N,
+        uint8[] memory _obstacles,
+        uint256 _maxSkeletons,
+        uint _skeletonRespawnTime
+    ) {
         require((_N * _N) / 8 == _obstacles.length, "N");
 
         N = _N;
         obstacles = _obstacles;
         maxSkeletons = _maxSkeletons;
+        skeletonRespawnTime = _skeletonRespawnTime;
 
         spawnSkeletons();
         teleportIn();
@@ -65,7 +71,7 @@ contract Map is Obstacles, Skeletons, Players, Movement {
     event logInt(int x);
     event logUint(uint x);
 
-    function move(uint nonce, uint stepsToDo) public {
+    function move(uint nonce, uint stepsToDo) life public {
         Player storage player = playerAddressToState[msg.sender];
         require(player.isActive);
         require(nonce == player.nonce, "Nonce");
@@ -94,14 +100,19 @@ contract Map is Obstacles, Skeletons, Players, Movement {
         player.position = uint(currentPosition);
         setObstacle(player.position);
         player.nonce++;
-
         emit PlayerMoved(msg.sender, stepsDone, player.position);
     }
 
-    function castSpell(uint asset, address target) external {
+    function castSpell(uint asset, address target) life external {
         if (isAddressInSkeletonRange(target)) {
             killSkeleton(target);
         }
         emit SpellCasted(asset, target);
+    }
+
+    function runLife() public override {
+        if (isTimeToSkeletonRespawn()) {
+            spawnSkeletons();
+        }
     }
 }

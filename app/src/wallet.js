@@ -53,9 +53,9 @@ async function fetchMapContractFactory({ signer }) {
     return ContractFactory
 }
 
-export async function deployMap({ signer, N, obstacles, maxSkeletons }) {
+export async function deployMap({ signer, N, obstacles, maxSkeletons, skeletonRespawnTime }) {
     const ContractFactory = await fetchMapContractFactory({ signer })
-    const contract = await ContractFactory.deploy(N, obstacles, maxSkeletons);
+    const contract = await ContractFactory.deploy(N, obstacles, maxSkeletons, skeletonRespawnTime);
 
     console.info('Contract deployment transaction hash:', contract.deployTransaction.hash);
     await contract.deployed();
