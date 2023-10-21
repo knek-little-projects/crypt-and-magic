@@ -1,16 +1,21 @@
 Fri
 - [x] move
-- [ ] cast spells
-- [ ] death
 
 Sat
+- [ ] cast spells
+- [ ] skeleton moves
+- [ ] death
+- [ ] allow multiple players
+
+- [ ] start filling the forms
+- [ ] start doing presentation
+
 - [ ] gold mine
 - [ ] show gold
 - [ ] bigger map
 - [ ] mint token
-- [ ] responsive
+- [ ] disable buttons on wait
 
-Optional
 - [ ] improve visuals
 - [ ] highlight where you are
 - [ ] scroll map where you are
@@ -20,8 +25,6 @@ Optional
 Sun
 - [ ] deploy on scroll
 - [ ] deploy on mantle
-- [ ] fill the forms
-- [ ] presentation
 
 - display player icon, health and magic on a side panel
 - display any char icon, health and magic on a side panel on hover on map

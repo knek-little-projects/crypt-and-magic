@@ -76,17 +76,6 @@ contract Map is Obstacles, Skeletons, Players, Movement {
         for (uint i = 0; i < maxSteps; i++) {
             uint step = stepsToDo & 3;
 
-            // {
-            //     emit log();
-            //     int _nextPosition = currentPosition + getStepDelta(step);
-
-            //     emit logInt(_nextPosition);
-
-            //     if (hasObstacle(uint(_nextPosition))) {
-            //         emit logUint(255);
-            //     }
-            // }
-
             int nextPosition = getNextPositionAfterStep(currentPosition, step);
             if (nextPosition == currentPosition) {
                 break;
