@@ -11,6 +11,7 @@ import "./Movement.sol";
 
 contract Map is Obstacles, Skeletons, Players, Movement {
     event PlayerMoved(address player, uint stepsDone, uint newPosition);
+    event SpellCasted(uint asset, uint position);
 
     uint public immutable version = 1;
 
@@ -95,5 +96,9 @@ contract Map is Obstacles, Skeletons, Players, Movement {
         player.nonce++;
 
         emit PlayerMoved(msg.sender, stepsDone, player.position);
+    }
+
+    function castSpell(uint asset, uint position) external {
+        emit SpellCasted(asset, position);
     }
 }

@@ -61,7 +61,7 @@ export default function useAssets() {
         },
         {
             name: "fireball",
-            id: "fireball",
+            id: 0,
             src: "/map/fireball.png",
             type: SPELLS,
         },
@@ -81,13 +81,13 @@ export default function useAssets() {
         },
         {
             name: "Skeleton Sword",
-            id: "skel-sword",
+            id: 1,
             src: "/map/skel-sword.png",
             type: SPELLS,
         },
     ]
     function findAssetById(id) {
-        return assets.find(o => o.id === id)
+        return assets.find(o => o.id == id)
     }
     function getAssetById(id) {
         const asset = findAssetById(id)

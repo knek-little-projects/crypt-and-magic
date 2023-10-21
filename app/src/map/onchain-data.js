@@ -5,6 +5,7 @@ import { convertBytesToMatrix, convertMatrixToBytes, deployMap, fetchMap, useWal
 import * as cellFuncs from "./cell-funcs"
 import useAssets from "../assets";
 import * as $wallet from "../wallet"
+import uuidv4 from "../uuid";
 
 window.$wallet = $wallet
 
@@ -169,6 +170,20 @@ export function useOnchainData({ autoload }) {
             console.log("LOG", ...arguments)
         }
 
+        async function handleSpellCasted(id, p) {
+            console.log("SpellCasted", ...arguments)
+            const cell = cellFuncs.positionToCell(p, N)
+            const asset = getAssetById(id)
+            console.log("at", cell, asset)
+            data.map.addSpell({
+                id: uuidv4(),
+                asset,
+                cell,
+                finishTime: new Date().getTime() + 1000 * 1,
+            })
+            data.commit()
+        }
+
         const disable = () => {
             contract.off('PlayerAdded', handlePlayerAdded);
             contract.off('PlayerMoved', handlePlayerMoved);
@@ -176,6 +191,7 @@ export function useOnchainData({ autoload }) {
             contract.off('log', log);
             contract.off('logInt', log);
             contract.off('logUint', log);
+            contract.off('SpellCasted', handleSpellCasted);
         }
 
         if (!contract) {
@@ -189,6 +205,7 @@ export function useOnchainData({ autoload }) {
         contract.on('PlayerAdded', handlePlayerAdded);
         contract.on('PlayerMoved', handlePlayerMoved);
         contract.on('PlayerRemoved', handlePlayerRemoved);
+        contract.on('SpellCasted', handleSpellCasted);
         contract.on('log',log);
         contract.on('logInt',log);
         contract.on('logUint',log);
@@ -198,6 +215,7 @@ export function useOnchainData({ autoload }) {
 
 
     return {
+        N,
         data,
         contract,
         account,

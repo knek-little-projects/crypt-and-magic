@@ -40,7 +40,6 @@ export default function* (map, cell) {
             if (!spell.asset) {
                 throw Error(`spell.asset is empty for spell ${spell}`)
             }
-
             yield {
                 className: 'opacityAnimation',
                 style: {

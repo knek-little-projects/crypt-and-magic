@@ -27,6 +27,10 @@ export function positionToCell(p, N) {
     }
 }
 
+export function cellToPosition({ i, j }, N) {
+    return i * N + j
+}
+
 export function getArrowDirection(a, b) {
     if (a.i < b.i && a.j === b.j) {
         return "r"

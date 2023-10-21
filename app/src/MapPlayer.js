@@ -32,7 +32,7 @@ export default function MapPlayer() {
     const { assets, getAssetById } = useAssets()
     const magicSpells = assets.filter(a => a.type === SPELLS).map(asset => new Spell({ asset, size: 1 }))
 
-    const { data, contract, account } = useOnchainData({ autoload: true })
+    const { N, data, contract, account } = useOnchainData({ autoload: true })
 
     function getPlayer() {
         return data.map.findChar(account)
@@ -69,6 +69,23 @@ export default function MapPlayer() {
             skel.cell = nextCell
         }
     }
+
+    useInterval(() => {
+        const t = new Date().getTime()
+        const remove = data.map
+            .getSpells()
+            .filter(spell => spell.finishTime < t)
+
+        if (remove.length === 0) {
+            return
+        }
+
+        remove.forEach(spell => {
+            console.debug("remove spell", spell)
+            data.map.removeSpell(spell)
+        })
+        data.commit()
+    }, 1000)
 
     useInterval(() => {
         if (moves.length === 0) {
@@ -188,16 +205,24 @@ export default function MapPlayer() {
                 console.error("No spells")
                 return
             }
-            data.map.clearSpells()
-            data.map.addSpell({
-                id: uuidv4(),
-                asset: magicSpells[0].asset,
-                targetId: chars[0].id,
-            })
-            data.commit()
-            setCasted({ cell, spell: magicSpells[0] })
-            setRunEmulation(true)
-            setSelectedSpell(null)
+
+            async function castSpell() {
+                const p = cellFuncs.cellToPosition(cell, N)
+                console.debug("to cast spell at", cell, p)
+                await contract.castSpell(0, p)
+            }
+
+            castSpell()
+            // data.map.clearSpells()
+            // data.map.addSpell({
+            //     id: uuidv4(),
+            //     asset: magicSpells[0].asset,
+            //     targetId: chars[0].id,
+            // })
+            // data.commit()
+            // setCasted({ cell, spell: magicSpells[0] })
+            // setRunEmulation(true)
+            // setSelectedSpell(null)
             return
         }
 

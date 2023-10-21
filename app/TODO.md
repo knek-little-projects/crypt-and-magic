@@ -1,30 +1,31 @@
-Fri
-- [x] move
-
 Sat
-- [ ] cast spells
 - [ ] skeleton moves
-- [ ] death
-- [ ] allow multiple players
+- [ ] skeleton casts
+- [ ] skeleton dies
+- [ ] player dies
+- [ ] test multiple players
 
+- [ ] gold mine
+- [ ] mint token
+- [ ] show gold
+- [ ] bigger map
+
+- [ ] deploy and test on scroll
+- [ ] deploy and test on mantle
+
+Sun
 - [ ] start filling the forms
 - [ ] start doing presentation
 
-- [ ] gold mine
-- [ ] show gold
-- [ ] bigger map
-- [ ] mint token
-- [ ] disable buttons on wait
+Other
+- [ ] fix ui and small bugs
 
+- [ ] disable buttons on wait
 - [ ] improve visuals
 - [ ] highlight where you are
 - [ ] scroll map where you are
 - [ ] help screen with shortkeys
 - [ ] show market (but without ability to buy (for now))
-
-Sun
-- [ ] deploy on scroll
-- [ ] deploy on mantle
 
 - display player icon, health and magic on a side panel
 - display any char icon, health and magic on a side panel on hover on map
