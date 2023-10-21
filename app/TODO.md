@@ -1,6 +1,4 @@
 Sat
-- [x] skeleton dies
-- [ ] skeleton respwans
 - [ ] skeleton moves
 - [ ] skeleton casts
 - [ ] player dies
