@@ -8,6 +8,8 @@ import useInterval from "./react-interval"
 import useAssets from "./assets"
 import uuidv4 from "./uuid"
 import { useOnchainData } from "./map/onchain-data"
+import { ethers } from "ethers"
+import { packSteps } from "./wallet"
 
 
 class Spell {
@@ -111,7 +113,7 @@ export default function MapPlayer() {
 
         console.warn("Everybody immortale")
         // data.map.getChars().filter(char => char.damage >= 100).forEach(char => data.map.removeChar(char))
-        
+
         data.commit()
     }, delay)
 
@@ -200,7 +202,19 @@ export default function MapPlayer() {
         }
 
         if (moves.length > 0 && cellFuncs.eq(moves[moves.length - 1], cell)) {
-            setRunEmulation(true)
+
+            if (moves.length > 64) {
+                console.error("The path is longer 64")
+                return
+            }
+
+            async function move() {
+                const nonce = await contract.nonce()
+                const steps = packSteps(player.cell, moves)
+                await contract.move(nonce, steps)
+            }
+            move()
+            // setRunEmulation(true)
             return
         }
 
@@ -274,7 +288,7 @@ export default function MapPlayer() {
                 contract &&
                 <>
                     {
-                        player 
+                        player
                         &&
                         <button onClick={teleportOut}>Teleport out</button>
                         ||

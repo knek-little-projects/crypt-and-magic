@@ -1,5 +1,5 @@
 Fri
-- [ ] move
+- [x] move
 - [ ] cast spells
 - [ ] death
 
@@ -8,6 +8,7 @@ Sat
 - [ ] show gold
 - [ ] bigger map
 - [ ] mint token
+- [ ] responsive
 
 Optional
 - [ ] improve visuals

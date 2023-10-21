@@ -16,7 +16,6 @@ struct Player {
 abstract contract Players is Obstacles, RandomPosition {
     event PlayerAdded(address player, uint p);
     event PlayerRemoved(address player, uint p);
-    event PlayerMoved(address player, uint steps);
 
     mapping(address => Player) public playerAddressToState;
     address[] public playerAddresses;
@@ -27,7 +26,7 @@ abstract contract Players is Obstacles, RandomPosition {
         return playerAddresses;
     }
 
-    function teleportIn() external {
+    function teleportIn() public {
         Player storage player = playerAddressToState[msg.sender];
 
         require(!player.isActive);
@@ -51,5 +50,9 @@ abstract contract Players is Obstacles, RandomPosition {
         unsetObstacle(player.position);
 
         emit PlayerRemoved(msg.sender, player.position);
+    }
+
+    function nonce() external view returns (uint) {
+        return playerAddressToState[msg.sender].nonce;
     }
 }

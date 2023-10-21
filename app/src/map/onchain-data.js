@@ -9,7 +9,7 @@ import * as $wallet from "../wallet"
 window.$wallet = $wallet
 
 function toNumber(obj) {
-    obj = {...obj}
+    obj = { ...obj }
     for (const key in obj) {
         if (obj[key] instanceof BigNumber) {
             obj[key] = obj[key].toNumber()
@@ -33,15 +33,24 @@ export function useOnchainData({ autoload }) {
         setContract(await deployMap({ signer, N, obstacles, maxSkeletons }))
     }
 
+    const [mapStateLoaded, setMapStateLoaded] = useState(false)
+
     useEffect(() => {
         if (!contract) {
             return
         }
 
-        console.log(window.$contract = contract)
+        console.debug(window.$contract = contract)
         localStorage.setItem("lastContractAddress", contract.address)
 
-        loadMapFromChain().catch(e => console.error(e))
+        loadMapFromChain()
+            .catch(e => {
+                console.error(e)
+                setMapStateLoaded(false)
+            })
+            .then(() => {
+                setMapStateLoaded(true)
+            })
     }, [contract])
 
     async function loadMapFromChain() {
@@ -61,10 +70,8 @@ export function useOnchainData({ autoload }) {
             const id = skeletonAddresses[i]
             const { damage, step, position } = toNumber(skeletons[i])
 
-            const cell = {
-                i: Math.floor(position / N),
-                j: Math.floor(position % N)
-            }
+            const cell = cellFuncs.positionToCell(position, N)
+
             data.map.addChar({
                 id,
                 asset: getAssetById("skel-mage"),
@@ -77,10 +84,7 @@ export function useOnchainData({ autoload }) {
             const id = playerAddresses[i]
             const { damage, position } = toNumber(players[i])
 
-            const cell = {
-                i: Math.floor(position / N),
-                j: Math.floor(position % N)
-            }
+            const cell = cellFuncs.positionToCell(position, N)
 
             data.map.addChar({
                 id,
@@ -133,9 +137,6 @@ export function useOnchainData({ autoload }) {
     }
 
     useEffect(() => {
-        if (!contract) {
-            return;
-        }
 
         async function handlePlayerAdded(id) {
             console.debug("handlePlayerAdded")
@@ -155,14 +156,45 @@ export function useOnchainData({ autoload }) {
             data.commit()
         }
 
-        contract.on('PlayerAdded', handlePlayerAdded);
-        contract.on('PlayerRemoved', handlePlayerRemoved);
-
-        return () => {
-            contract.off('PlayerAdded', handlePlayerAdded);
-            contract.off('PlayerRemoved', handlePlayerRemoved);
+        async function handlePlayerMoved(id, steps, p) {
+            console.debug("PlayerMoved", id, steps, p)
+            data.map.updateCharPosition({
+                id,
+                cell: cellFuncs.positionToCell(p, N)
+            })
+            data.commit()
         }
-    }, [contract]);
+
+        async function log() {
+            console.log("LOG", ...arguments)
+        }
+
+        const disable = () => {
+            contract.off('PlayerAdded', handlePlayerAdded);
+            contract.off('PlayerMoved', handlePlayerMoved);
+            contract.off('PlayerRemoved', handlePlayerRemoved);
+            contract.off('log', log);
+            contract.off('logInt', log);
+            contract.off('logUint', log);
+        }
+
+        if (!contract) {
+            return
+        }
+
+        if (!mapStateLoaded) {
+            return
+        }
+
+        contract.on('PlayerAdded', handlePlayerAdded);
+        contract.on('PlayerMoved', handlePlayerMoved);
+        contract.on('PlayerRemoved', handlePlayerRemoved);
+        contract.on('log',log);
+        contract.on('logInt',log);
+        contract.on('logUint',log);
+
+        return disable;
+    }, [contract, mapStateLoaded]);
 
 
     return {

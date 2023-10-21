@@ -7,9 +7,11 @@ import "./Obstacles.sol";
 import "./RandomPosition.sol";
 import "./Skeletons.sol";
 import "./Players.sol";
+import "./Movement.sol";
 
+contract Map is Obstacles, Skeletons, Players, Movement {
+    event PlayerMoved(address player, uint stepsDone, uint newPosition);
 
-contract Map is Obstacles, Skeletons, Players {
     uint public immutable version = 1;
 
     constructor(uint256 _N, uint8[] memory _obstacles, uint256 _maxSkeletons) {
@@ -20,6 +22,7 @@ contract Map is Obstacles, Skeletons, Players {
         maxSkeletons = _maxSkeletons;
 
         spawnSkeletons();
+        teleportIn();
     }
 
     function getFullState()
@@ -57,32 +60,51 @@ contract Map is Obstacles, Skeletons, Players {
         }
     }
 
-    // function move(uint nonce, uint stepsToDo) public {
-    //     require(nonce == characterAddressToNonce[msg.sender], "Nonce");
+    event log();
+    event logInt(int x);
+    event logUint(uint x);
 
-    //     CharState storage player = characterAddressToCharacterState[msg.sender];
-    //     CharState memory skeletons = new CharState[](skeletonAddresses.length);
-    //     int currentPosition = int(player.position);
+    function move(uint nonce, uint stepsToDo) public {
+        Player storage player = playerAddressToState[msg.sender];
+        require(player.isActive);
+        require(nonce == player.nonce, "Nonce");
 
-    //     uint stepsDone = 0;
-    //     for (uint i = 0; i < 128; i++) {
-    //         uint step = stepsToDo & 3;
+        int currentPosition = int(player.position);
 
-    //         int nextPosition = getPositionDelta(currentPosition, step);
-    //         if (nextPosition == currentPosition) {
-    //             break;
-    //         }
+        uint stepsDone = 0;
+        uint maxSteps = stepsToDo >> 128;
+        for (uint i = 0; i < maxSteps; i++) {
+            uint step = stepsToDo & 3;
 
-    //         currentPosition = nextPosition;
-    //         stepsToDo = stepsToDo >> 2;
-    //         stepsDone = (stepsDone << 2) | step;
+            // {
+            //     emit log();
+            //     int _nextPosition = currentPosition + getStepDelta(step);
 
-    //         // skeletons move
-    //         for (uint j = 0; j < skeletonPositions.length; j++) {}
-    //     }
+            //     emit logInt(_nextPosition);
 
-    //     player.position = uint(currentPosition);
+            //     if (hasObstacle(uint(_nextPosition))) {
+            //         emit logUint(255);
+            //     }
+            // }
 
-    //     emit Movement(msg.sender, stepsDone);
-    // }
+            int nextPosition = getNextPositionAfterStep(currentPosition, step);
+            if (nextPosition == currentPosition) {
+                break;
+            }
+
+            currentPosition = nextPosition;
+            stepsToDo = stepsToDo >> 2;
+            stepsDone = (stepsDone << 2) | step;
+
+            // skeletons move
+            // for (uint j = 0; j < skeletonPositions.length; j++) {}
+        }
+
+        unsetObstacle(player.position);
+        player.position = uint(currentPosition);
+        setObstacle(player.position);
+        player.nonce++;
+
+        emit PlayerMoved(msg.sender, stepsDone, player.position);
+    }
 }

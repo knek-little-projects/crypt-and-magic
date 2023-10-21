@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ethers, providers } from 'ethers';
 import detectEthereumProvider from '@metamask/detect-provider';
+import * as cellFuncs from "./map/cell-funcs"
 
 window.$ethers = ethers
 
@@ -56,9 +57,9 @@ export async function deployMap({ signer, N, obstacles, maxSkeletons }) {
     const ContractFactory = await fetchMapContractFactory({ signer })
     const contract = await ContractFactory.deploy(N, obstacles, maxSkeletons);
 
-    console.log('Contract deployment transaction hash:', contract.deployTransaction.hash);
+    console.info('Contract deployment transaction hash:', contract.deployTransaction.hash);
     await contract.deployed();
-    console.log('Contract deployed to address:', contract.address);
+    console.info('Contract deployed to address:', contract.address);
     return contract
 }
 
@@ -84,11 +85,11 @@ export function convertMatrixToBytes(N, f) {
             bits += f({ i, j }) ? '1' : '0';
         }
     }
-    
+
     // Convert the bits to bytes
     let bytesArr = [];
     for (let i = 0; i < bits.length; i += 8) {
-        const byte = parseInt(bits.slice(i, i+8), 2)
+        const byte = parseInt(bits.slice(i, i + 8), 2)
         bytesArr.push(byte)
     }
 
@@ -115,12 +116,31 @@ export function convertBytesToMatrix(N, bytes) {
     if (!parseInt(N)) {
         throw Error()
     }
-    
+
     const bits = bytesToBits(bytes)
-    
+
     // Now, recreate the function f() using the bits
     return function f({ i, j }) {
         let index = i * N + j;
         return bits[index] === '1';
     };
+}
+
+export function packSteps(startCell, nextCells) {
+    const maxSteps = ethers.BigNumber.from(nextCells.length)
+    let steps = ethers.BigNumber.from(0)
+    let a = startCell
+    let s = ""
+    let shl = 0
+    for (const b of nextCells) {
+        const step = cellFuncs.getMoveDirectionForContract(a, b)
+        s = s + cellFuncs.getArrowDirection(a, b)
+        steps = ethers.BigNumber.from(step).shl(shl).or(steps)
+        shl += 2
+        a = b
+    }
+    const packedSteps = maxSteps.shl(128).add(steps)
+    console.debug(packedSteps)
+    console.debug(s)
+    return packedSteps
 }

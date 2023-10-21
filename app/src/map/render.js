@@ -28,12 +28,19 @@ export default function* (map, cell) {
                 throw Error(`not implemented yet`)
             }
             const { asset } = chars[0]
+            if (!asset) {
+                throw Error(`asset is empty for char ${JSON.stringify(chars[0])}`)
+            }
             yield { image: asset.src }
         }
     }
     {
         const spells = map.getSpellsAt(cell)
         for (const spell of spells) {
+            if (!spell.asset) {
+                throw Error(`spell.asset is empty for spell ${spell}`)
+            }
+
             yield {
                 className: 'opacityAnimation',
                 style: {

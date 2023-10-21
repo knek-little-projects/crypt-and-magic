@@ -19,7 +19,7 @@ function MetaMask({ }) {
             return
         }
 
-        console.log(window.$contract = contract)
+        console.debug(window.$contract = contract)
         setInputContractAddress(contract.address)
     }, [contract])
 

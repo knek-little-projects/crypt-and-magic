@@ -49,7 +49,7 @@ abstract contract Movement is Obstacles {
             return startPosition;
         }
 
-        if (hasObstacle(uint(startPosition))) {
+        if (hasObstacle(uint(nextPosition))) {
             return startPosition;
         }
     }

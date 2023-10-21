@@ -149,6 +149,10 @@ export default function useMapData() {
             this._data.chars[char.id] = char
         }
 
+        updateCharPosition({ id, cell }) {
+            this._data.chars[id].cell = cell
+        }
+
         removeChar({ id }) {
             delete this._data.chars[id]
         }

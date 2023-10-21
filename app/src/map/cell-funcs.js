@@ -40,3 +40,21 @@ export function getArrowDirection(a, b) {
         throw Error(`Arrow direction undefined since the points are identical: ${JSON.stringify([a, b])}`)
     }
 }
+
+export const STEP_RIGHT = 0; // 0b00
+export const STEP_DOWN = 1; // 0b01
+export const STEP_LEFT = 2; // 0b10
+export const STEP_UP = 3; // 0b11
+export function getMoveDirectionForContract(a, b) {
+    if (a.i < b.i && a.j === b.j) {
+        return STEP_RIGHT
+    } else if (a.i > b.i && a.j === b.j) {
+        return STEP_LEFT
+    } else if (a.j < b.j && a.i === b.i) {
+        return STEP_DOWN
+    } else if (a.j > b.j && a.i === b.i) {
+        return STEP_UP
+    } else {
+        throw Error(`Arrow direction undefined since the points are identical: ${JSON.stringify([a, b])}`)
+    }
+}
