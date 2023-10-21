@@ -27,11 +27,9 @@ export function useOnchainData({ autoload }) {
     const { signer, account } = useWallet()
     const [contract, setContract] = useState(null)
 
-    async function deployContract() {
+    async function deployContract({ maxSkeletons, skeletonRespawnTime }) {
         // const obstacles = ethers.utils.formatBytes32String("0x0");
         const obstacles = convertMatrixToBytes(N, cell => data.map.getBackgroundAt(cell).asset.isObstacle)
-        const maxSkeletons = 3
-        const skeletonRespawnTime = 10
         setContract(await deployMap({ signer, N, obstacles, maxSkeletons, skeletonRespawnTime }))
     }
 
@@ -164,6 +162,7 @@ export function useOnchainData({ autoload }) {
                 id,
                 cell: cellFuncs.positionToCell(p, N)
             })
+            data.map.setSteps([])
             data.commit()
         }
 
@@ -188,7 +187,7 @@ export function useOnchainData({ autoload }) {
             data.map.addSpell({
                 id: uuidv4(),
                 asset,
-                cell: char.cell,
+                targetId: targetAddress,
                 finishTime: new Date().getTime() + 1000 * 1,
             })
             data.commit()
@@ -221,6 +220,12 @@ export function useOnchainData({ autoload }) {
             skeleton.cell = cellFuncs.positionToCell(p, N)
             data.commit()
         }
+        async function handlePlayerKilled(id) {
+            console.log("handlePlayerKilled", ...arguments)
+        }
+        async function handlePlayerDamaged(id, damage) {
+            console.log("handlePlayerDamaged", ...arguments)
+        }
 
         const disable = () => {
             contract.off('PlayerAdded', handlePlayerAdded);
@@ -233,6 +238,8 @@ export function useOnchainData({ autoload }) {
             contract.off('SpellCasted', handleSpellCasted);
             contract.off('SkeletonAdded', handleSkeletonAdded);
             contract.off('SkeletonMoved', handleSkeletonMoved);
+            contract.off('PlayerKilled', handlePlayerKilled);
+            contract.off('PlayerDamaged', handlePlayerDamaged);
         }
 
         if (!contract) {
@@ -243,16 +250,25 @@ export function useOnchainData({ autoload }) {
             return
         }
 
-        contract.on('PlayerAdded', handlePlayerAdded);
-        contract.on('PlayerMoved', handlePlayerMoved);
-        contract.on('PlayerRemoved', handlePlayerRemoved);
-        contract.on('SpellCasted', handleSpellCasted);
-        contract.on('SkeletonRemoved', handleSkeletonRemoved);
-        contract.on('SkeletonAdded', handleSkeletonAdded);
-        contract.on('SkeletonMoved', handleSkeletonMoved);
-        contract.on('log', log);
-        contract.on('logInt', log);
-        contract.on('logUint', log);
+        try {
+            contract.on('SpellCasted', handleSpellCasted);
+            contract.on('PlayerKilled', handlePlayerKilled);
+            contract.on('PlayerDamaged', handlePlayerDamaged);
+            contract.on('PlayerAdded', handlePlayerAdded);
+            contract.on('PlayerMoved', handlePlayerMoved);
+            contract.on('PlayerRemoved', handlePlayerRemoved);
+            contract.on('SkeletonRemoved', handleSkeletonRemoved);
+            contract.on('SkeletonAdded', handleSkeletonAdded);
+            contract.on('SkeletonMoved', handleSkeletonMoved);
+            contract.on('log', log);
+            contract.on('logInt', log);
+            contract.on('logUint', log);
+        } catch (e) {
+            console.error(e)
+            setContract(null)
+            setMapStateLoaded(false)
+            return;
+        }
 
         return disable;
     }, [contract, mapStateLoaded]);

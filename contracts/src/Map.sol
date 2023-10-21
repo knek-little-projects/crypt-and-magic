@@ -10,7 +10,6 @@ import "./Players.sol";
 import "./Movement.sol";
 
 contract Map is Obstacles, Skeletons, Players, Movement {
-    event PlayerMoved(address player, uint stepsDone, uint newPosition);
     event SpellCasted(uint asset, address target);
 
     uint public immutable version = 1;
@@ -136,7 +135,7 @@ contract Map is Obstacles, Skeletons, Players, Movement {
         }
     }
 
-    function move(uint nonce, uint stepsToDo) public life {
+    function move(uint nonce, uint stepsToDo) public onlyOnMap(msg.sender) runLifeAfterwards {
         Player storage player = playerAddressToState[msg.sender];
         require(player.isActive);
         require(nonce == player.nonce, "Nonce");
@@ -168,11 +167,17 @@ contract Map is Obstacles, Skeletons, Players, Movement {
         emit PlayerMoved(msg.sender, stepsDone, player.position);
     }
 
-    function castSpell(uint asset, address target) external life {
+    function castSpell(
+        uint asset,
+        address target
+    ) external onlyOnMap(msg.sender) runLifeAfterwards {
+        emit SpellCasted(asset, target);
+
         if (isSkeletonAddress(target)) {
             killSkeleton(target);
+        } else {
+            damagePlayer(target, 30);
         }
-        emit SpellCasted(asset, target);
     }
 
     function runLife() public override {

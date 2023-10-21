@@ -141,6 +141,9 @@ export default function MapEditor() {
         }
     }, [contract])
 
+    const [maxSkeletons, setMaxSkeletons] = useState(3)
+    const [skeletonRespawnTime, setSkeletonRespawnTime] = useState(10)
+
     return (
         <div className='MapEditor'>
 
@@ -148,9 +151,12 @@ export default function MapEditor() {
                 account &&
                 <div>
                     <p>Connected Account: {account}</p>
-                    <button onClick={() => deployContract()}>Deploy Map Contract</button>
+                    <button onClick={() => deployContract({ maxSkeletons, skeletonRespawnTime })}>Deploy Map Contract</button>
                     <button onClick={() => loadContract(inputContractAddress)}>Load</button>
                     <input type="text" value={inputContractAddress} onInput={e => setInputContractAddress(e.target.value)} style={{ width: "400px" }} />
+
+                    setMaxSkeletons: <input type="text" value={maxSkeletons} onInput={e => setMaxSkeletons(e.target.value)} />
+                    setSkeletonRespawnTime: <input type="text" value={skeletonRespawnTime} onInput={e => setSkeletonRespawnTime(e.target.value)} />
                 </div>
                 ||
                 <div>Unlock MetaMask and reload the page</div>

@@ -17,9 +17,22 @@ struct Player {
 abstract contract Players is Obstacles, RandomPosition, Life {
     event PlayerAdded(address player, uint p);
     event PlayerRemoved(address player, uint p);
+    event PlayerMoved(address player, uint stepsDone, uint newPosition);
+    event PlayerKilled(address player);
+    event PlayerDamaged(address player, uint damage);
 
     mapping(address => Player) public playerAddressToState;
     address[] public playerAddresses;
+
+    modifier onlyOnMap(address playerAddress) {
+        require(playerAddressToState[playerAddress].isActive, "OA");
+        _;
+    }
+
+    modifier onlyFromHome(address playerAddress) {
+        require(!playerAddressToState[playerAddress].isActive, "OI");
+        _;
+    }
 
     using Set for address[];
 
@@ -27,10 +40,8 @@ abstract contract Players is Obstacles, RandomPosition, Life {
         return playerAddresses;
     }
 
-    function teleportIn() life public {
+    function teleportIn() public onlyFromHome(msg.sender) runLifeAfterwards {
         Player storage player = playerAddressToState[msg.sender];
-
-        require(!player.isActive);
 
         uint p = nextRandomPositionWithoutObstacle();
         player.isActive = true;
@@ -41,7 +52,7 @@ abstract contract Players is Obstacles, RandomPosition, Life {
         emit PlayerAdded(msg.sender, p);
     }
 
-    function teleportOut() life external {
+    function teleportOut() external onlyOnMap(msg.sender) runLifeAfterwards {
         Player storage player = playerAddressToState[msg.sender];
 
         require(player.isActive);
@@ -55,5 +66,25 @@ abstract contract Players is Obstacles, RandomPosition, Life {
 
     function nonce() external view returns (uint) {
         return playerAddressToState[msg.sender].nonce;
+    }
+
+    function damagePlayer(
+        address playerAddress,
+        uint damage
+    ) internal onlyOnMap(msg.sender) onlyOnMap(playerAddress) {
+        Player storage player = playerAddressToState[playerAddress];
+        require(player.isActive);
+
+        emit PlayerDamaged(playerAddress, damage);
+
+        damage += uint(player.damage);
+        if (damage < 100) {
+            player.damage = damage;
+        } else {
+            unsetObstacle(player.position);
+            playerAddresses.remove(playerAddress);
+            delete playerAddressToState[playerAddress];
+            emit PlayerKilled(playerAddress);
+        }
     }
 }

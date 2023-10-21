@@ -77,7 +77,7 @@ abstract contract Skeletons is Obstacles, RandomPosition, Life {
         return startRespawnCountdown + skeletonRespawnTime < block.timestamp;
     }
 
-    function killSkeleton(address skeletonAddress) internal life {
+    function killSkeleton(address skeletonAddress) internal runLifeAfterwards {
         skeletonAddresses.remove(skeletonAddress);
         uint p = skeletonAddressToState[skeletonAddress].position;
         unsetObstacle(p);

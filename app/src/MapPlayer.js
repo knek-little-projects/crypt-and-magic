@@ -40,35 +40,6 @@ export default function MapPlayer() {
 
     const player = window.$player = getPlayer()
 
-    useEffect(() => {
-        try {
-            data.reactLoadFromLocalStorage()
-        } catch (e) {
-
-        }
-    }, [])
-
-    function updateSkeletons(additonalObstacle) {
-        const skeletons = data.map.getChars().filter(char => char.asset.set === "skeletons")
-        for (const skel of skeletons) {
-            if (skel.movement === undefined) {
-                skel.movement = +1
-            }
-            const { i, j } = skel.cell;
-            let nextCell = { i: i + skel.movement, j }
-            if (isObstacle(nextCell) && !cellFuncs.eq(player.cell, nextCell)) {
-                skel.movement = -skel.movement
-                nextCell = { i: i + skel.movement, j }
-            }
-            if (isObstacle(nextCell)) {
-                continue
-            }
-            if (cellFuncs.eq(nextCell, additonalObstacle)) {
-                continue
-            }
-            skel.cell = nextCell
-        }
-    }
 
     useInterval(() => {
         const t = new Date().getTime()
@@ -87,78 +58,78 @@ export default function MapPlayer() {
         data.commit()
     }, 1000)
 
-    useInterval(() => {
-        if (moves.length === 0) {
-            setDelay(0)
-            setRunEmulation(false)
-            return
-        }
+    // useInterval(() => {
+    //     if (moves.length === 0) {
+    //         setDelay(0)
+    //         setRunEmulation(false)
+    //         return
+    //     }
 
-        const player = getPlayer()
-        const currentMove = moves.shift()  // dangerously anti react
-        if (isObstacle(currentMove)) {
-            while (moves.shift()) { };
-            return
-        }
+    //     const player = getPlayer()
+    //     const currentMove = moves.shift()  // dangerously anti react
+    //     if (isObstacle(currentMove)) {
+    //         while (moves.shift()) { };
+    //         return
+    //     }
 
-        updateSkeletons(currentMove)
-        player.cell = currentMove;
+    //     updateSkeletons(currentMove)
+    //     player.cell = currentMove;
 
-        let swordAttack = false
-        {
-            const player = getPlayer()
-            for (const skel of data.map.getChars().filter(char => char.asset.set === "skeletons")) {
-                if (isAround(skel.cell, player.cell)) {
-                    swordAttack = true
-                    break
-                }
-            }
-        }
+    //     let swordAttack = false
+    //     {
+    //         const player = getPlayer()
+    //         for (const skel of data.map.getChars().filter(char => char.asset.set === "skeletons")) {
+    //             if (isAround(skel.cell, player.cell)) {
+    //                 swordAttack = true
+    //                 break
+    //             }
+    //         }
+    //     }
 
-        const map = data.map
-        map.removeStepAt(currentMove)
-        if (swordAttack) {
-            map.addSpell({
-                id: uuidv4(),
-                asset: getAssetById("skel-sword"),
-                targetId: player.id,
-            })
-            player.damage += 25
-        }
+    //     const map = data.map
+    //     map.removeStepAt(currentMove)
+    //     if (swordAttack) {
+    //         map.addSpell({
+    //             id: uuidv4(),
+    //             asset: getAssetById("skel-sword"),
+    //             targetId: player.id,
+    //         })
+    //         player.damage += 25
+    //     }
 
-        map.replaceChar(player)
+    //     map.replaceChar(player)
 
-        console.warn("Everybody immortale")
-        // data.map.getChars().filter(char => char.damage >= 100).forEach(char => data.map.removeChar(char))
+    //     console.warn("Everybody immortale")
+    //     // data.map.getChars().filter(char => char.damage >= 100).forEach(char => data.map.removeChar(char))
 
-        data.commit()
-    }, delay)
+    //     data.commit()
+    // }, delay)
 
-    function isAround(a, b) {
-        return Math.abs(a.i - b.i) <= 1 && Math.abs(a.j - b.j) <= 1
-    }
+    // function isAround(a, b) {
+    //     return Math.abs(a.i - b.i) <= 1 && Math.abs(a.j - b.j) <= 1
+    // }
 
-    useEffect(() => {
-        if (!runEmulation) {
-            return
-        }
+    // useEffect(() => {
+    //     if (!runEmulation) {
+    //         return
+    //     }
 
-        if (casted) {
-            setTimeout(() => {
-                data.map.getSpells().forEach(spell => data.map.getCharsAtSpell(spell).forEach(char => char.damage += 40))
-                data.map.getChars().filter(char => char.health <= 0).forEach(char => data.map.removeChar(char))
-                data.map.clearSpells()
-                data.commit()
-                setRunEmulation(false)
-                setCasted(null)
-            }, 1000)
-            return
-        }
+    //     if (casted) {
+    //         setTimeout(() => {
+    //             data.map.getSpells().forEach(spell => data.map.getCharsAtSpell(spell).forEach(char => char.damage += 40))
+    //             data.map.getChars().filter(char => char.health <= 0).forEach(char => data.map.removeChar(char))
+    //             data.map.clearSpells()
+    //             data.commit()
+    //             setRunEmulation(false)
+    //             setCasted(null)
+    //         }, 1000)
+    //         return
+    //     }
 
-        if (moves.length > 0) {
-            setDelay(100)
-        }
-    }, [runEmulation])
+    //     if (moves.length > 0) {
+    //         setDelay(100)
+    //     }
+    // }, [runEmulation])
 
     const isObstacle = (cell) => data.map.hasObstacle(cell)
 
@@ -230,7 +201,10 @@ export default function MapPlayer() {
             async function move() {
                 const nonce = await contract.nonce()
                 const steps = packSteps(player.cell, moves)
-                await contract.move(nonce, steps)
+
+                await contract.move(nonce, steps,
+                    // { gasLimit: 30000000 }
+                )
             }
             move().catch(e => { })
             // setRunEmulation(true)
