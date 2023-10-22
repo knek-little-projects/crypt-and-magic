@@ -5,18 +5,23 @@ import findPath from "./map/find-path"
 import * as cellFuncs from "./map/cell-funcs"
 import { useOnchainData } from "./map/onchain-data"
 import { packSteps } from "./wallet"
+import { useSelector } from "react-redux"
+import { useObstacles } from "./obstacles"
 
 
 export default function MapPlayer() {
     const [moves, setMoves] = useState([])
     const { N, data, contract, account } = useOnchainData({ autoload: true })
 
+    const players = useSelector(state => state.players)
+
     function getPlayer() {
-        return data.map.findChar(account)
+        return players.find(player => player.id == account)
     }
 
     const player = window.$player = getPlayer()
-    const isObstacle = (cell) => data.map.hasObstacle(cell)
+    const { hasObstacle } = useObstacles()
+    const isObstacle = cell => hasObstacle(cell)
 
     function buildPathTo(cell) {
         const cells = findPath(isObstacle, player.cell, cell)

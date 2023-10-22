@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import * as cellFuncs from "./cell-funcs"
 import useAssets from "../assets";
 import * as $wallet from "../wallet"
-import { addSkeleton, addSpell, clearExpiredSpells, setObstaclesFromBytes } from "../store";
+import { addPlayer, addSkeleton, addSpell, clearExpiredSpells, setObstaclesFromBytes } from "../store";
 import useInterval from "../react-interval";
 
 window.$wallet = $wallet
@@ -69,30 +69,14 @@ export function useOnchainData({ autoload }) {
             const cell = cellFuncs.positionToCell(position, N)
 
             dispatch(addSkeleton({ id, cell }))
-
-            data.map.addChar({
-                id,
-                asset: getAssetById("skel-mage"),
-                damage,
-                step,
-                cell,
-            })
         }
         for (let i = 0; i < playerAddresses.length; i++) {
             const id = playerAddresses[i]
             const { damage, position } = toNumber(players[i])
 
             const cell = cellFuncs.positionToCell(position, N)
-
-            data.map.addChar({
-                id,
-                asset: getAssetById("wizard"),
-                damage,
-                cell,
-            })
+            dispatch(addPlayer({ id, cell, damage }))
         }
-
-        data.commit()
     }
 
     async function loadLastContractAddress() {
