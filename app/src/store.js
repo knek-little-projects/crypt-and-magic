@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { configureStore } from '@reduxjs/toolkit';
+import { convertBytesToMatrix } from './wallet';
 
 const counter = createSlice({
     name: 'counter',
@@ -79,12 +80,49 @@ const spells = createSlice({
 
 export const { addSpell, clearExpiredSpells } = spells.actions;
 
+const obstacles = createSlice({
+    name: 'obstacles',
+    initialState: {},
+    reducers: {
+        setObstaclesFromBytes(_, { payload: { obstacles, N } }) {
+            const result = {}
+
+            const f = convertBytesToMatrix(N, obstacles)
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    if (f({ i, j })) {
+                        result[i + " " + j] = true
+                    }
+                }
+            }
+
+            return result
+
+        },
+        setObstacle(state, { payload: { i, j } }) {
+            return {
+                ...state,
+                [i + " " + j]: true
+            }
+        },
+        unsetObstacle(state, { payload: { i, j } }) {
+            return {
+                ...state,
+                [i + " " + j]: false
+            }
+        },
+    }
+})
+
+export const { setObstacle, unsetObstacle, setObstaclesFromBytes } = obstacles.actions;
+
 
 export const store = configureStore({
     reducer: {
         counter: counter.reducer,
         spells: spells.reducer,
         players: players.reducer,
+        obstacles: obstacles.reducer,
     }
 });
 

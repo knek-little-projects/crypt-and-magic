@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react"
 import useMapData from "./data"
 import { BigNumber, ethers, providers } from 'ethers';
-import { convertBytesToMatrix, convertMatrixToBytes, deployMap, fetchMap, useWallet } from "../wallet"
+import { convertMatrixToBytes, deployMap, fetchMap, useWallet } from "../wallet"
 import { useSelector, useDispatch } from 'react-redux';
 import * as cellFuncs from "./cell-funcs"
 import useAssets from "../assets";
 import * as $wallet from "../wallet"
-import uuidv4 from "../uuid";
-import { Spell, addSpell, clearExpiredSpells } from "../store";
+import { Spell, addSpell, clearExpiredSpells, setObstaclesFromBytes } from "../store";
 import useInterval from "../react-interval";
 
 window.$wallet = $wallet
@@ -23,8 +22,8 @@ function toNumber(obj) {
 }
 
 export function useOnchainData({ autoload }) {
-    const spells = useSelector(state => state.spells);
-    const dispatch = useDispatch();
+    const dispatch = useDispatch()
+    const obstacles = useSelector(state => state.obstacles)
 
     const data = useMapData()
     const N = data.map.getSize()
@@ -35,7 +34,7 @@ export function useOnchainData({ autoload }) {
 
     async function deployContract({ maxSkeletons, skeletonRespawnTime }) {
         // const obstacles = ethers.utils.formatBytes32String("0x0");
-        const obstacles = convertMatrixToBytes(N, cell => data.map.getBackgroundAt(cell).asset.isObstacle)
+        const obstacles = convertMatrixToBytes(N, ({ i, j }) => obstacles[i + " " + j] === true)
         setContract(await deployMap({ signer, N, obstacles, maxSkeletons, skeletonRespawnTime }))
     }
 
@@ -61,16 +60,7 @@ export function useOnchainData({ autoload }) {
 
     async function loadMapFromChain() {
         const [obstacles, skeletonAddresses, playerAddresses, skeletons, players] = await contract.getFullState();
-
-        const f = convertBytesToMatrix(N, obstacles)
-        data.map.clear()
-        for (let i = 0; i < N; i++) {
-            for (let j = 0; j < N; j++) {
-                if (f({ i, j })) {
-                    data.map.setBackgroundIdAt({ i, j }, "water")
-                }
-            }
-        }
+        dispatch(setObstaclesFromBytes({ obstacles, N }))
 
         for (let i = 0; i < skeletonAddresses.length; i++) {
             const id = skeletonAddresses[i]

@@ -7,6 +7,7 @@ import useAssets from '../assets'
 export default function* (map, cell) {
     const { assets, getAssetById } = useAssets()
     const spells = useSelector(state => state.spells)
+    const obstacles = useSelector(state => state.obstacles)
     const mapSize = map.getSize()
 
     if (cellFuncs.isOutsideOfMap(cell, mapSize)) {
@@ -14,8 +15,9 @@ export default function* (map, cell) {
         return
     }
     {
-        const { asset } = map.getBackgroundAt(cell)
-        yield { image: asset.src }
+        const hasBackgroundObstacle = obstacles[cell.i + " " + cell.j] === true;
+        const assetId = hasBackgroundObstacle ? "water" : "grass"
+        yield { image: getAssetById(assetId).src }
 
         const children = (
             <div className='debug coordinates'>

@@ -3,7 +3,6 @@ import { useState } from "react"
 import Map from "./Map"
 import findPath from "./map/find-path"
 import * as cellFuncs from "./map/cell-funcs"
-import useInterval from "./react-interval"
 import { useOnchainData } from "./map/onchain-data"
 import { packSteps } from "./wallet"
 

@@ -29,58 +29,10 @@ export default function useMapData() {
             if (!this._data.steps) {
                 this._data.steps = {}
             }
-            if (!this._data.spells) {
-                this._data.spells = {}
-                this._data.spellMap = {}
-            }
         }
 
         getSize() {
             return mapSize
-        }
-
-        addSpell(spell) {
-            this._data.spells[spell.id] = spell
-        }
-
-        getCharsAtSpell(spell) {
-            const cell = this.findSpellCell(spell)
-            if (cell) {
-                return this.getCharsAt(cell)
-            } else {
-                return []
-            }
-        }
-
-        findSpellCell({ cell, targetId }) {
-            if (cell) {
-                return cell
-            }
-            if (targetId) {
-                const char = this.findChar(targetId)
-                if (char) {
-                    return char.cell
-                }
-            }
-        }
-
-        removeSpell(spell) {
-            delete this._data.spells[spell.id]
-        }
-
-        getSpellsAt(cell) {
-            return this.getSpells().filter(spell => {
-                const spellCell = this.findSpellCell(spell)
-                return spellCell && cellFuncs.eq(cell, spellCell)
-            })
-        }
-
-        getSpells() {
-            return Object.values(this._data.spells)
-        }
-
-        clearSpells() {
-            this._data.spells = {}
         }
 
         getBackgroundAt(cell) {
