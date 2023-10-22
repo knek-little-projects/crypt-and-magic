@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux"
 import { eq } from "./map/cell-funcs"
+import { MAP_SIZE } from "./store"
 
 export function useObstacles() {
     const players = useSelector(state => state.players)
@@ -7,6 +8,10 @@ export function useObstacles() {
     const obstacles = useSelector(state => state.obstacles)
 
     const hasObstacle = cell => {
+        if (cell.i < 0 || cell.j < 0 || cell.i >= MAP_SIZE || cell.j >= MAP_SIZE) {
+            return true
+        }
+
         if (obstacles[cell.i + " " + cell.j]) {
             return true
         }

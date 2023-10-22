@@ -2,6 +2,8 @@ import { createSlice } from '@reduxjs/toolkit';
 import { configureStore } from '@reduxjs/toolkit';
 import { convertBytesToMatrix } from './wallet';
 
+export const MAP_SIZE = 16
+
 const counter = createSlice({
     name: 'counter',
     initialState: [],
@@ -16,12 +18,6 @@ const counter = createSlice({
 })
 
 export const { increment, decrement } = counter.actions;
-
-function assert(x) {
-    if (!x) {
-        throw Error(`Assertion error`)
-    }
-}
 
 const players = createSlice({
     name: 'players',

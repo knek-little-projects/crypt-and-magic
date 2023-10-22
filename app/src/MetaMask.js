@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ethers, providers } from 'ethers';
 import { deployMap, fetchMap, useWallet } from "./wallet"
+import { MAP_SIZE } from './store';
 
 function MetaMask({ }) {
 
     const { signer, account } = window.$wallet = useWallet()
     const [contract, setContract] = useState(null)
 
-    const N = 16
+    const N = MAP_SIZE
     const obstacles = ethers.utils.formatBytes32String("0x0");
 
     async function deployContract() {

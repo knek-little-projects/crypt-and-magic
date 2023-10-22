@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as cellFuncs from "./cell-funcs"
 import useAssets from '../assets';
 import render from "./render"
+import { MAP_SIZE } from '../store';
 
 function key({ i, j }) {
     return i + " " + j
@@ -10,7 +11,7 @@ function key({ i, j }) {
 export default function useMapData() {
 
     const { getAssetById } = useAssets()
-    const mapSize = 16
+    const mapSize = MAP_SIZE
     const defaultBackgroundId = "grass"
 
     class Map {

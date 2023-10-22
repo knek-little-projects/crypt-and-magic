@@ -1,4 +1,3 @@
-import { SPELLS } from "./map/layer-types"
 import { useState } from "react"
 import Map from "./Map"
 import findPath from "./map/find-path"
@@ -7,11 +6,11 @@ import { useOnchainData } from "./map/onchain-data"
 import { packSteps } from "./wallet"
 import { useSelector } from "react-redux"
 import { useObstacles } from "./obstacles"
-
+import { MAP_SIZE } from "./store"
 
 export default function MapPlayer() {
     const [moves, setMoves] = useState([])
-    const { N, data, contract, account } = useOnchainData({ autoload: true })
+    const { data, contract, account } = useOnchainData({ autoload: true })
 
     const players = useSelector(state => state.players)
 
@@ -129,7 +128,7 @@ export default function MapPlayer() {
                     <Map
                         hoverImageUrl={hoverImageUrl}
                         hoverSize={hoverSize}
-                        mapSize={data.mapSize}
+                        mapSize={MAP_SIZE}
                         getItems={data.getItems}
                         onClick={onClick}
                     />
