@@ -177,7 +177,13 @@ export default function MapPlayer() {
                 return
             }
 
-            contract.castSpell(0, chars[0].id).catch(e => { })
+            async function f() {
+                const tx = await contract.castSpell(0, chars[0].id).catch(e => { })
+                const rx = await tx.wait()
+                console.log(".castSpell() GAS USED", rx.gasUsed.toNumber())
+            }
+
+            f().catch(e => { })
             // data.map.clearSpells()
             // data.map.addSpell({
             //     id: uuidv4(),
@@ -202,9 +208,11 @@ export default function MapPlayer() {
                 const nonce = await contract.nonce()
                 const steps = packSteps(player.cell, moves)
 
-                await contract.move(nonce, steps,
+                const tx = await contract.move(nonce, steps,
                     // { gasLimit: 30000000 }
                 )
+                const rx = await tx.wait()
+                console.log(".move() GAS USED", rx.gasUsed.toNumber())
             }
             move().catch(e => { })
             // setRunEmulation(true)

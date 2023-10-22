@@ -62,3 +62,28 @@ export function getMoveDirectionForContract(a, b) {
         throw Error(`Arrow direction undefined since the points are identical: ${JSON.stringify([a, b])}`)
     }
 }
+
+
+export function addStepToCell(step, { i, j }) {
+    if (step == STEP_RIGHT) {
+        return {
+            i: i + 1,
+            j
+        }
+    } else if (step == STEP_LEFT) {
+        return {
+            i: i - 1,
+            j
+        }
+    } else if (step == STEP_UP) {
+        return {
+            i,
+            j: j - 1
+        }
+    } else if (step == STEP_DOWN) {
+        return {
+            i,
+            j: j + 1,
+        }
+    }
+}

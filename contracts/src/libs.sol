@@ -24,6 +24,19 @@ library BitMap {
 }
 
 library MemoryBitMap {
+    function isSet(uint8[] memory a, uint p) internal pure returns (bool) {
+        uint i = p / 8;
+        uint j = 7 - (p % 8);
+        return ((a[i] >> j) & 1) == 1;
+    }
+
+    function set(uint8[] memory a, uint p) internal pure {
+        uint i = p / 8;
+        uint j = 7 - (p % 8);
+        uint x = 1 << j;
+        a[i] = a[i] | uint8(x);
+    }
+
     function unset(uint8[] memory a, uint p) internal pure {
         uint i = p / 8;
         uint j = 7 - (p % 8);

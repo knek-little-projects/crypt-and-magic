@@ -70,68 +70,109 @@ contract Map is Obstacles, Skeletons, Players, Movement {
     event logInt(int x);
     event logUint(uint x);
 
-    function _findPlayerAt(uint p) internal view returns (address) {
-        for (uint i = 0; i < playerAddresses.length; i++) {
-            if (playerAddressToState[playerAddresses[i]].position == p) {
-                return playerAddresses[i];
-            }
-        }
-        return address(0);
-    }
+    // function _findPlayerAt(uint p) internal view returns (address) {
+    //     for (uint i = 0; i < playerAddresses.length; i++) {
+    //         if (playerAddressToState[playerAddresses[i]].position == p) {
+    //             return playerAddresses[i];
+    //         }
+    //     }
+    //     return address(0);
+    // }
 
-    function _skeletonAttack(address skeletonAddress) internal returns (bool) {
+    // function _skeletonAttack(address skeletonAddress) internal returns (bool) {
+    //     Skeleton storage skeleton = skeletonAddressToState[skeletonAddress];
+
+    //     int startPosition = int(skeleton.position);
+    //     for (uint step = 0; step < 8; step++) {
+    //         int nextPosition = startPosition + getStepDelta(step);
+
+    //         if (isOutside(startPosition, step, nextPosition)) {
+    //             continue;
+    //         }
+
+    //         if (!hasObstacle(uint(nextPosition))) {
+    //             continue;
+    //         }
+
+    //         address player = _findPlayerAt(uint(nextPosition));
+    //         if (player == address(0)) {
+    //             continue;
+    //         }
+
+    //         emit SpellCasted(1, player);
+    //         return true;
+    //     }
+    //     return false;
+    // }
+
+    function _skeletonMove(address skeletonAddress, uint maxSteps) internal {
         Skeleton storage skeleton = skeletonAddressToState[skeletonAddress];
 
         int startPosition = int(skeleton.position);
-        for (uint step = 0; step < 8; step++) {
-            int nextPosition = startPosition + getStepDelta(step);
+        unsetObstacle(uint(startPosition));
 
-            if (isOutside(startPosition, step, nextPosition)) {
-                continue;
-            }
-
-            if (!hasObstacle(uint(nextPosition))) {
-                continue;
-            }
-
-            address player = _findPlayerAt(uint(nextPosition));
-            if (player == address(0)) {
-                continue;
-            }
-
-            emit SpellCasted(1, player);
-            return true;
-        }
-        return false;
-    }
-
-    function _skeletonMove(address skeletonAddress) internal {
-        Skeleton storage skeleton = skeletonAddressToState[skeletonAddress];
-
-        int startPosition = int(skeleton.position);
-        int nextPosition;
         uint step = skeleton.step;
-        for (uint i = 0; i < 4; i++) {
-            step = (step + i) % 4;
-            nextPosition = getNextPositionAfterStep(startPosition, step);
+        int nextPosition;
+
+        while (maxSteps > 0) {
+            maxSteps--;
+            for (uint i = 0; i < 4; i++) {
+                step = (step + i) % 4;
+                nextPosition = getNextPositionAfterStep(startPosition, step);
+                if (nextPosition != startPosition) {
+                    break;
+                }
+            }
             if (nextPosition != startPosition) {
+                startPosition = nextPosition;
+            } else {
                 break;
             }
         }
-        if (nextPosition != startPosition) {
-            unsetObstacle(skeleton.position);
-            skeleton.position = uint(nextPosition);
-            setObstacle(skeleton.position);
-            skeleton.step = step;
-            emit SkeletonMoved(skeletonAddress, uint(nextPosition));
+
+        skeleton.step = step;
+        skeleton.position = uint(nextPosition);
+        setObstacle(uint(nextPosition));
+        emit SkeletonMoved(skeletonAddress, uint(nextPosition));
+    }
+
+    function _absSub(uint a, uint b) internal pure returns (uint) {
+        if (a < b) {
+            return b - a;
+        } else {
+            return a - b;
         }
     }
 
-    function _moveSkeletons() internal {
+    function _distance(uint a, uint b, uint n) internal pure returns (uint d) {
+        return _absSub(a / n, b / n) + _absSub(a % n, b % n);
+    }
+
+    function _moveSkeletons(
+        uint playerPosition,
+        uint maxSkeletonsToMove,
+        uint maxDistance,
+        uint maxSteps
+    ) internal {
         for (uint j = 0; j < skeletonAddresses.length; j++) {
-            if (!_skeletonAttack(skeletonAddresses[j])) {
-                _skeletonMove(skeletonAddresses[j]);
+            address skeletonAddress = skeletonAddresses[j];
+            if (
+                _distance(skeletonAddressToState[skeletonAddress].position, playerPosition, N) >
+                maxDistance
+            ) {
+                continue;
             }
+
+            if (maxSkeletonsToMove == 0) {
+                return;
+            }
+
+            maxSkeletonsToMove--;
+
+            //     // if (_skeletonAttack(skeletonAddress)) {
+            //     //     continue;
+            //     // }
+            _skeletonMove(skeletonAddress, maxSteps);
         }
     }
 
@@ -141,30 +182,32 @@ contract Map is Obstacles, Skeletons, Players, Movement {
         require(nonce == player.nonce, "Nonce");
 
         int currentPosition = int(player.position);
+        unsetObstacle(uint(currentPosition));
 
-        uint stepsDone = 0;
         uint maxSteps = stepsToDo >> 128;
         for (uint i = 0; i < maxSteps; i++) {
-            uint step = stepsToDo & 3;
+            int nextPosition = getNextPositionAfterStep(currentPosition, stepsToDo & 3);
 
-            int nextPosition = getNextPositionAfterStep(currentPosition, step);
             if (nextPosition == currentPosition) {
                 break;
             }
 
             currentPosition = nextPosition;
             stepsToDo = stepsToDo >> 2;
-            stepsDone = (stepsDone << 2) | step;
-
-            unsetObstacle(player.position);
-            player.position = uint(currentPosition);
-            setObstacle(player.position);
-
-            _moveSkeletons();
         }
 
         player.nonce++;
-        emit PlayerMoved(msg.sender, stepsDone, player.position);
+        player.position = uint(currentPosition);
+        setObstacle(uint(currentPosition));
+
+        _moveSkeletons(
+            uint(currentPosition),
+            3, // max skeletons to move
+            5, // max distance around the player
+            maxSteps
+        );
+
+        emit PlayerMoved(msg.sender, stepsToDo, uint(currentPosition));
     }
 
     function castSpell(

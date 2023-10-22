@@ -80,7 +80,7 @@ abstract contract Players is Obstacles, RandomPosition, Life {
         damage += uint(player.damage);
         if (damage < 100) {
             player.damage = damage;
-        } else {
+        } else {    
             unsetObstacle(player.position);
             playerAddresses.remove(playerAddress);
             delete playerAddressToState[playerAddress];

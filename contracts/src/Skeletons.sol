@@ -74,7 +74,7 @@ abstract contract Skeletons is Obstacles, RandomPosition, Life {
     }
 
     function isTimeToSkeletonRespawn() internal view returns (bool) {
-        return startRespawnCountdown + skeletonRespawnTime < block.timestamp;
+        return startRespawnCountdown != 0 && startRespawnCountdown + skeletonRespawnTime < block.timestamp;
     }
 
     function killSkeleton(address skeletonAddress) internal runLifeAfterwards {
