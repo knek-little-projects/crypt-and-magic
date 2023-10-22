@@ -3,18 +3,22 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import MapEditor from './MapEditor';
 import MapPlayer from './MapPlayer';
 import TestComponent from './TestComponent';
+import { Provider } from 'react-redux';
+import { store } from './store';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Navigation />
-      <Routes>
-        <Route path="/" element={<MapPlayer />} />
-        <Route path="/editor" element={<MapEditor />} />
-        <Route path="/test" element={<TestPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <Provider store={store}>
+      <BrowserRouter>
+        <Navigation />
+        <Routes>
+          <Route path="/" element={<MapPlayer />} />
+          <Route path="/editor" element={<MapEditor />} />
+          <Route path="/test" element={<TestPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </Provider>
   );
 }
 

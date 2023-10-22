@@ -1,24 +1,15 @@
-import { useEffect, useState } from "react";
-import MetaMask from "./MetaMask";
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { decrement, increment, store } from './store';
 
 export default function TestComponent() {
-    const [counter, setCounter] = useState(0)
-
-    async function run() {
-        setCounter(counter => counter + 1);
-    }
-
-    useEffect(() => {
-        console.log("QWE")
-        run()
-        run()
-        run()
-        run()
-        run()
-    }, [])
+    const count = useSelector(state => state.counter);
+    const dispatch = useDispatch();
     return (
         <div>
-            {counter}
+            <button onClick={() => dispatch(decrement())}>-</button>
+            <span>{JSON.stringify(count)}</span>
+            <button onClick={() => dispatch(increment('hi'))}>+</button>
         </div>
     )
 }

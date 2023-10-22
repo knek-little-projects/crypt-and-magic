@@ -1,8 +1,12 @@
 import Step from './step'
 import * as cellFuncs from "./cell-funcs"
+import { useSelector } from 'react-redux'
+import useAssets from '../assets'
 
 
 export default function* (map, cell) {
+    const { assets, getAssetById } = useAssets()
+    const spells = useSelector(state => state.spells)
     const mapSize = map.getSize()
 
     if (cellFuncs.isOutsideOfMap(cell, mapSize)) {
@@ -35,17 +39,18 @@ export default function* (map, cell) {
         }
     }
     {
-        const spells = map.getSpellsAt(cell)
-        for (const spell of spells) {
-            if (!spell.asset) {
-                throw Error(`spell.asset is empty for spell ${spell}`)
-            }
-            yield {
-                className: 'opacityAnimation',
-                style: {
-                    opacity: "0.75",
-                },
-                image: spell.asset.src,
+        for (const char of map.getCharsAt(cell)) {
+            for (const spell of spells) {
+                console.log(">>>", spell)
+                if (char.id == spell.idTo) {
+                    yield {
+                        className: 'opacityAnimation',
+                        style: {
+                            opacity: "0.75",
+                        },
+                        image: getAssetById(spell.assetId).src,
+                    }
+                }
             }
         }
     }

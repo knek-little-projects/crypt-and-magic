@@ -2,10 +2,13 @@ import { useState, useEffect } from "react"
 import useMapData from "./data"
 import { BigNumber, ethers, providers } from 'ethers';
 import { convertBytesToMatrix, convertMatrixToBytes, deployMap, fetchMap, useWallet } from "../wallet"
+import { useSelector, useDispatch } from 'react-redux';
 import * as cellFuncs from "./cell-funcs"
 import useAssets from "../assets";
 import * as $wallet from "../wallet"
 import uuidv4 from "../uuid";
+import { Spell, addSpell, clearExpiredSpells } from "../store";
+import useInterval from "../react-interval";
 
 window.$wallet = $wallet
 
@@ -20,6 +23,9 @@ function toNumber(obj) {
 }
 
 export function useOnchainData({ autoload }) {
+    const spells = useSelector(state => state.spells);
+    const dispatch = useDispatch();
+
     const data = useMapData()
     const N = data.map.getSize()
     const { getAssetById, findAssetById } = useAssets()
@@ -136,6 +142,10 @@ export function useOnchainData({ autoload }) {
         setContract(contract)
     }
 
+    useInterval(() => {
+        dispatch(clearExpiredSpells())
+    }, 1000)
+
     useEffect(() => {
 
         async function handlePlayerAdded(id) {
@@ -184,13 +194,20 @@ export function useOnchainData({ autoload }) {
                 console.warn(`Spell casted for a non-existent char ${targetAddress}`)
                 return
             }
-            data.map.addSpell({
-                id: uuidv4(),
-                asset,
-                targetId: targetAddress,
-                finishTime: new Date().getTime() + 1000 * 1,
-            })
-            data.commit()
+            // data.map.addSpell({
+            //     id: uuidv4(),
+            //     asset,
+            //     targetId: targetAddress,
+            //     finishTime: new Date().getTime() + 1000 * 1,
+            // })
+            // data.commit()
+            dispatch(addSpell(new Spell({
+                assetId: asset.id,
+                idFrom: char.id,
+                idTo: char.id,
+                ttl: 1000,
+                startTime: new Date().getTime(),
+            })))
         }
 
         async function handleSkeletonRemoved(id, p) {
