@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import * as cellFuncs from "./cell-funcs"
 import useAssets from "../assets";
 import * as $wallet from "../wallet"
-import { addPlayer, addSkeleton, addSpell, clearExpiredSpells, setObstaclesFromBytes } from "../store";
+import { MAP_SIZE, addPlayer, addSkeleton, addSpell, clearExpiredSpells, clearSteps, movePlayer, moveSkeleton, removePlayer, removeSkeleton, setObstaclesFromBytes, setSteps } from "../store";
 import useInterval from "../react-interval";
 
 window.$wallet = $wallet
@@ -23,11 +23,10 @@ function toNumber(obj) {
 
 export function useOnchainData({ autoload }) {
     const dispatch = useDispatch()
-    const obstacles = useSelector(state => state.obstacles)
 
     const data = useMapData()
-    const N = data.map.getSize()
-    const { getAssetById, findAssetById } = useAssets()
+    const N = MAP_SIZE
+    const { findAssetById } = useAssets()
 
     const { signer, account } = useWallet()
     const [contract, setContract] = useState(null)
@@ -127,29 +126,20 @@ export function useOnchainData({ autoload }) {
         async function handlePlayerAdded(id) {
             console.debug("handlePlayerAdded")
             const { damage, position } = toNumber(await contract.playerAddressToState(id))
-            data.map.addChar({
-                id,
-                damage,
-                asset: getAssetById("wizard"),
-                cell: cellFuncs.positionToCell(position, N),
-            })
-            data.commit()
+            const cell = cellFuncs.positionToCell(position, N)
+            dispatch(addPlayer({ id, damage, cell }))
         }
 
         async function handlePlayerRemoved(id, p) {
             console.debug("handlePlayerRemoved")
-            data.map.removeChar({ id })
-            data.commit()
+            dispatch(removePlayer({ id }))
         }
 
         async function handlePlayerMoved(id, steps, p) {
             console.debug("PlayerMoved", id, steps, p)
-            data.map.updateCharPosition({
-                id,
-                cell: cellFuncs.positionToCell(p, N)
-            })
-            data.map.setSteps([])
-            data.commit()
+            const cell = cellFuncs.positionToCell(p, N)
+            dispatch(movePlayer({ id, cell }))
+            dispatch(clearSteps())
         }
 
         async function log() {
@@ -164,23 +154,10 @@ export function useOnchainData({ autoload }) {
                 console.error(`Asset ${spellId} wasn't found`)
                 return
             }
-            // console.log("at", cell, asset)
-            const char = data.map.findChar(targetAddress)
-            if (!char) {
-                console.warn(`Spell casted for a non-existent char ${targetAddress}`)
-                return
-            }
-            // data.map.addSpell({
-            //     id: uuidv4(),
-            //     asset,
-            //     targetId: targetAddress,
-            //     finishTime: new Date().getTime() + 1000 * 1,
-            // })
-            // data.commit()
             dispatch(addSpell({
                 assetId: asset.id,
-                idFrom: char.id,
-                idTo: char.id,
+                idFrom: targetAddress,
+                idTo: targetAddress,
                 ttl: 1000,
                 startTime: new Date().getTime(),
             }))
@@ -188,30 +165,24 @@ export function useOnchainData({ autoload }) {
 
         async function handleSkeletonRemoved(id, p) {
             console.log("SkeletonRemoved", ...arguments)
-            data.map.removeChar({ id })
+            dispatch(removeSkeleton({ id }))
         }
 
         async function handleSkeletonAdded(id, p) {
+            console.log("SkeletonAdded", ...arguments)
 
             const cell = cellFuncs.positionToCell(p, N)
 
-            data.map.addChar({
+            dispatch(addSkeleton({
                 id,
-                asset: getAssetById("skel-mage"),
-                damage: 0,
-                step: 0,
                 cell,
-            })
+            }))
         }
 
         async function handleSkeletonMoved(id, p) {
             console.log("SkeletonMoved", ...arguments)
-            const skeleton = data.map.findChar(id)
-            if (!skeleton) {
-                console.warn("Skeleton not found on the map", id)
-            }
-            skeleton.cell = cellFuncs.positionToCell(p, N)
-            data.commit()
+            const cell = cellFuncs.positionToCell(p, N)
+            dispatch(moveSkeleton({ id, cell }))
         }
         async function handlePlayerKilled(id) {
             console.log("handlePlayerKilled", ...arguments)

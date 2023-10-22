@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { configureStore } from '@reduxjs/toolkit';
 import { convertBytesToMatrix } from './wallet';
+import { eq } from './map/cell-funcs';
 
 export const MAP_SIZE = 16
 
@@ -19,6 +20,26 @@ const counter = createSlice({
 
 export const { increment, decrement } = counter.actions;
 
+
+const steps = createSlice({
+    name: 'steps',
+    initialState: {},
+    reducers: {
+        clearSteps() {
+            return {}
+        },
+        setSteps(_, { payload: { cells, ids } }) {
+            const result = {}
+            for (let i = 0; i < cells.length; i++) {
+                result[cells[i].i + " " + cells[i].j] = ids[i]
+            }
+            return result
+        },
+    }
+})
+
+export const { setSteps, clearSteps } = steps.actions;
+
 const players = createSlice({
     name: 'players',
     initialState: [],
@@ -29,10 +50,19 @@ const players = createSlice({
         removePlayer(state, { payload: { id } }) {
             return state.filter(player => player.id != id)
         },
+        movePlayer(state, { payload: { id, cell } }) {
+            const player = state.find(player => player.id == id)
+            if (player) {
+                player.cell = cell
+            }
+        },
+        removePlayerAt(state, { payload: cell }) {
+            return state.filter(s => !eq(s.cell, cell))
+        }
     }
 })
 
-export const { addPlayer, removePlayer } = players.actions
+export const { removePlayerAt, addPlayer, removePlayer, movePlayer } = players.actions
 
 const skeletons = createSlice({
     name: 'skeletons',
@@ -44,10 +74,19 @@ const skeletons = createSlice({
         removeSkeleton(state, { payload: { id } }) {
             return state.filter(skeleton => skeleton.id != id)
         },
+        moveSkeleton(state, { payload: { id, cell } }) {
+            const skel = state.find(skel => skel.id == id)
+            if (skel) {
+                skel.cell = cell
+            }
+        },
+        removeSkeletonAt(state, { payload: cell }) {
+            return state.filter(s => !eq(s.cell, cell))
+        }
     }
 })
 
-export const { addSkeleton, removeSkeleton } = skeletons.actions;
+export const { removeSkeletonAt, addSkeleton, removeSkeleton, moveSkeleton } = skeletons.actions;
 
 const spells = createSlice({
     name: 'spells',
@@ -108,6 +147,7 @@ export const store = configureStore({
         players: players.reducer,
         skeletons: skeletons.reducer,
         obstacles: obstacles.reducer,
+        steps: steps.reducer,
     }
 });
 

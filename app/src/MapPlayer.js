@@ -4,15 +4,18 @@ import findPath from "./map/find-path"
 import * as cellFuncs from "./map/cell-funcs"
 import { useOnchainData } from "./map/onchain-data"
 import { packSteps } from "./wallet"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { useObstacles } from "./obstacles"
-import { MAP_SIZE } from "./store"
+import { MAP_SIZE, setSteps } from "./store"
 
 export default function MapPlayer() {
+    const dispatch = useDispatch()
+    const players = useSelector(state => state.players)
+    const skeletons = useSelector(state => state.skeletons)
+    const steps = useSelector(state => state.steps)
+
     const [moves, setMoves] = useState([])
     const { data, contract, account } = useOnchainData({ autoload: true })
-
-    const players = useSelector(state => state.players)
 
     function getPlayer() {
         return players.find(player => player.id == account)
@@ -39,8 +42,7 @@ export default function MapPlayer() {
         }
 
         ids.push(colorType + "c")
-        data.map.setSteps(cells, ids)
-        data.commit()
+        dispatch(setSteps({ cells, ids }))
     }
 
     const onClick = cell => {
@@ -52,14 +54,14 @@ export default function MapPlayer() {
             return
         }
 
-        const chars = data.map.getCharsAt(cell)
-        if (chars.length > 0) {
-            if (chars.length > 1) {
-                throw Error(`not implemented yet`)
-            }
+        let char = skeletons.find(skel => cellFuncs.eq(skel.cell, cell))
+        if (!char) {
+            char = players.find(p => cellFuncs.eq(p.cell, cell))
+        }
 
+        if (char) {
             async function f() {
-                const tx = await contract.castSpell(0, chars[0].id).catch(e => { })
+                const tx = await contract.castSpell(0, char.id).catch(e => { })
                 const rx = await tx.wait()
                 console.log(".castSpell() GAS USED", rx.gasUsed.toNumber())
             }

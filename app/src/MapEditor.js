@@ -8,6 +8,9 @@ import { BACKGROUND, CHARACTERS } from './map/layer-types';
 import * as cellFuncs from "./map/cell-funcs"
 import uuidv4 from "./uuid"
 import { useOnchainData } from './map/onchain-data';
+import { MAP_SIZE, removePlayerAt, removeSkeletonAt, setObstacle, unsetObstacle } from './store';
+import { useDispatch, useSelector } from 'react-redux';
+import { useObstacles } from './obstacles';
 
 function MapEditorBrushButton({ src, onClick, children }) {
     return (
@@ -19,9 +22,15 @@ function MapEditorBrushButton({ src, onClick, children }) {
 }
 
 export default function MapEditor() {
+    const N = MAP_SIZE
+    const dispatch = useDispatch()
+    const players = useSelector(state => state.players)
+    const skeletons = useSelector(state => state.skeletons)
+    const obstacles = useSelector(state => state.obstacles)
+    const { hasObstacle } = useObstacles()
+
     const { data, contract, account, deployContract, loadContract } = useOnchainData({ autoload: true })
     const [inputContractAddress, setInputContractAddress] = useState("")
-    const N = data.mapSize
     const { assets, getImageUrlById, findAssetById, getAssetById } = useAssets()
     const [brush, setBrush] = useState({ id: "grass", size: 1 })
     const [hoverImageUrl, setHoverImageUrl] = useState(null)
@@ -43,6 +52,12 @@ export default function MapEditor() {
         return cells
     }
 
+    function removeEverythingAt(cell) {
+        dispatch(removePlayerAt(cell))
+        dispatch(removeSkeletonAt(cell))
+        dispatch(unsetObstacle(cell))
+    }
+
     function onBrush(center) {
         if (brush === null) {
             return
@@ -52,49 +67,51 @@ export default function MapEditor() {
         const cells = getCellsAround(center, brush.size)
 
         if (asset.id === "erasor") {
-            cells.forEach(cell => data.map.removeEverythingAt(cell))
-            data.commit()
+            cells.forEach(cell => removeEverythingAt(cell))
             return
         }
 
-        if (asset.type === CHARACTERS) {
-            if (data.map.hasObstacle(center)) {
-                console.warn("has obstacle")
-                return
-            }
-        }
+        // if (asset.type === CHARACTERS) {
+        //     if (hasObstacle(center)) {
+        //         console.warn("has obstacle")
+        //         return
+        //     }
+        // }
 
-        if (asset.id === "wizard") {
-            let player = {
-                id: "wizard",
-                cell: center,
-                damage: 0,
-                asset,
-            }
+        // if (asset.id === "wizard") {
+        //     let player = {
+        //         id: "wizard",
+        //         cell: center,
+        //         damage: 0,
+        //         asset,
+        //     }
 
-            const oldPlayer = data.map.getChars().find(char => char.asset.id === asset.id)
-            if (oldPlayer) {
-                player = { ...oldPlayer, cell: center }
-            }
-            data.map.replaceChar(player)
-            data.commit()
-            return
-        }
+        //     const oldPlayer = data.map.getChars().find(char => char.asset.id === asset.id)
+        //     if (oldPlayer) {
+        //         player = { ...oldPlayer, cell: center }
+        //     }
+        //     data.map.replaceChar(player)
+        //     data.commit()
+        //     return
+        // }
 
-        if (asset.type === CHARACTERS) {
-            const skeleton = {
-                id: uuidv4(),
-                asset,
-                damage: 0,
-                cell: center,
-            }
-            data.map.addChar(skeleton)
-            return
-        }
+        // if (asset.type === CHARACTERS) {
+        //     const skeleton = {
+        //         id: uuidv4(),
+        //         asset,
+        //         damage: 0,
+        //         cell: center,
+        //     }
+        //     data.map.addChar(skeleton)
+        //     return
+        // }
 
         if (asset.type === BACKGROUND) {
-            cells.forEach(cell => data.map.setBackgroundIdAt(cell, brush.id))
-            data.commit()
+            if (asset.id === "grass") {
+                dispatch(setObstacle(center))
+            } else {
+                dispatch(unsetObstacle(center))
+            }
             return
         }
     }
@@ -116,7 +133,7 @@ export default function MapEditor() {
             }
         }
 
-        if (brush.size === 1 && brush.id === data.map.getBackgroundAt(cell).asset.id) {
+        if (brush.size === 1 && ((obstacles[cell.i + " " + cell.j] === true) === (brush.id === "water"))) {
             return {
                 image: null,
                 style: {},
@@ -171,13 +188,13 @@ export default function MapEditor() {
                     Erase 3x3
                 </MapEditorBrushButton>
                 {buttons}
-                <div className="vr" />
-                <MapEditorBrushButton src="/map/wizard.png" onClick={() => setBrush({ id: "wizard", size: 1 })}>
+                {/* <div className="vr" /> */}
+                {/* <MapEditorBrushButton src="/map/wizard.png" onClick={() => setBrush({ id: "wizard", size: 1 })}>
                     Hero
-                </MapEditorBrushButton>
-                <MapEditorBrushButton src="/map/skel-mage.png" onClick={() => setBrush({ id: "skel-mage", size: 1 })}>
+                </MapEditorBrushButton> */}
+                {/* <MapEditorBrushButton src="/map/skel-mage.png" onClick={() => setBrush({ id: "skel-mage", size: 1 })}>
                     Enemy
-                </MapEditorBrushButton>
+                </MapEditorBrushButton> */}
             </div>
             <hr />
             <Map
