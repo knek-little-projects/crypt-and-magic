@@ -17,25 +17,9 @@ const counter = createSlice({
 
 export const { increment, decrement } = counter.actions;
 
-
-function defined(x) {
-    if (x === undefined) {
-        throw Error(`Got undefined value`)
-    }
-    return x
-}
-
 function assert(x) {
     if (!x) {
         throw Error(`Assertion error`)
-    }
-}
-
-export class Player {
-    constructor({ id, cell, damage }) {
-        this.id = defined(id)
-        this.cell = defined(cell)
-        this.damage = defined(damage)
     }
 }
 
@@ -44,7 +28,6 @@ const players = createSlice({
     initialState: [],
     reducers: {
         addPlayer(state, { payload: player }) {
-            assert(player instanceof Player)
             return [...state, player]
         },
         removePlayer(state, { payload: { id } }) {
@@ -53,22 +36,28 @@ const players = createSlice({
     }
 })
 
-export class Spell {
-    constructor({ assetId, idFrom, idTo, ttl, startTime }) {
-        this.assetId = defined(assetId)
-        this.idFrom = defined(idFrom)
-        this.idTo = defined(idTo)
-        this.ttl = defined(ttl)
-        this.startTime = defined(startTime)
+export const { addPlayer, removePlayer } = players.actions
+
+const skeletons = createSlice({
+    name: 'skeletons',
+    initialState: [],
+    reducers: {
+        addSkeleton(state, { payload: skeleton }) {
+            return [...state, skeleton]
+        },
+        removeSkeleton(state, { payload: { id } }) {
+            return state.filter(skeleton => skeleton.id != id)
+        },
     }
-}
+})
+
+export const { addSkeleton, removeSkeleton } = skeletons.actions;
 
 const spells = createSlice({
     name: 'spells',
     initialState: [],
     reducers: {
         addSpell(state, { payload: spell }) {
-            assert(spell instanceof Spell)
             return [...state, spell]
         },
         clearExpiredSpells(state) {
@@ -116,12 +105,12 @@ const obstacles = createSlice({
 
 export const { setObstacle, unsetObstacle, setObstaclesFromBytes } = obstacles.actions;
 
-
 export const store = configureStore({
     reducer: {
         counter: counter.reducer,
         spells: spells.reducer,
         players: players.reducer,
+        skeletons: skeletons.reducer,
         obstacles: obstacles.reducer,
     }
 });

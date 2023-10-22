@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import * as cellFuncs from "./cell-funcs"
 import useAssets from "../assets";
 import * as $wallet from "../wallet"
-import { Spell, addSpell, clearExpiredSpells, setObstaclesFromBytes } from "../store";
+import { addSkeleton, addSpell, clearExpiredSpells, setObstaclesFromBytes } from "../store";
 import useInterval from "../react-interval";
 
 window.$wallet = $wallet
@@ -67,6 +67,8 @@ export function useOnchainData({ autoload }) {
             const { damage, step, position } = toNumber(skeletons[i])
 
             const cell = cellFuncs.positionToCell(position, N)
+
+            dispatch(addSkeleton({ id, cell }))
 
             data.map.addChar({
                 id,
@@ -191,13 +193,13 @@ export function useOnchainData({ autoload }) {
             //     finishTime: new Date().getTime() + 1000 * 1,
             // })
             // data.commit()
-            dispatch(addSpell(new Spell({
+            dispatch(addSpell({
                 assetId: asset.id,
                 idFrom: char.id,
                 idTo: char.id,
                 ttl: 1000,
                 startTime: new Date().getTime(),
-            })))
+            }))
         }
 
         async function handleSkeletonRemoved(id, p) {

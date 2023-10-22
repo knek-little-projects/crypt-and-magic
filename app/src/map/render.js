@@ -5,8 +5,9 @@ import useAssets from '../assets'
 
 
 export default function* (map, cell) {
-    const { assets, getAssetById } = useAssets()
+    const { getAssetById } = useAssets()
     const spells = useSelector(state => state.spells)
+    const skeletons = useSelector(state => state.skeletons)
     const obstacles = useSelector(state => state.obstacles)
     const mapSize = map.getSize()
 
@@ -28,18 +29,25 @@ export default function* (map, cell) {
         yield { children }
     }
     {
-        const chars = map.getCharsAt(cell)
-        if (chars.length > 0) {
-            if (chars.length > 1) {
-                throw Error(`not implemented yet`)
+        for (const skel of skeletons) {
+            if (cellFuncs.eq(skel.cell, cell)) {
+                yield { image: getAssetById("skel-mage").src }
             }
-            const { asset } = chars[0]
-            if (!asset) {
-                throw Error(`asset is empty for char ${JSON.stringify(chars[0])}`)
-            }
-            yield { image: asset.src }
         }
     }
+    // {
+        // const chars = map.getCharsAt(cell)
+        // if (chars.length > 0) {
+        //     if (chars.length > 1) {
+        //         throw Error(`not implemented yet`)
+        //     }
+        //     const { asset } = chars[0]
+        //     if (!asset) {
+        //         throw Error(`asset is empty for char ${JSON.stringify(chars[0])}`)
+        //     }
+        //     yield { image: asset.src }
+        // }
+    // }
     {
         for (const char of map.getCharsAt(cell)) {
             for (const spell of spells) {
