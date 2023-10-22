@@ -45,7 +45,7 @@ const players = createSlice({
     initialState: [],
     reducers: {
         addPlayer(state, { payload: player }) {
-            return [...state, player]
+            return [...state.filter(p => p.id != player.id), player]
         },
         removePlayer(state, { payload: { id } }) {
             return state.filter(player => player.id != id)
@@ -69,10 +69,20 @@ const skeletons = createSlice({
     initialState: [],
     reducers: {
         addSkeleton(state, { payload: skeleton }) {
-            return [...state, skeleton]
+            return [...state.filter(s => s.id != skeleton.id), skeleton]
         },
         removeSkeleton(state, { payload: { id } }) {
             return state.filter(skeleton => skeleton.id != id)
+        },
+        setSkeletonForRemoval(state, { payload: { id } }) {
+            const skel = state.find(skel => skel.id == id)
+            if (skel) {
+                skel.removeAfter = new Date().getTime() + 1000
+            }
+        },
+        clearExpiredSkeletons(state) {
+            const t = new Date().getTime()
+            return state.filter(skeleton => !skeleton.removeAfter || skeleton.removeAfter < t)
         },
         moveSkeleton(state, { payload: { id, cell } }) {
             const skel = state.find(skel => skel.id == id)
@@ -86,7 +96,7 @@ const skeletons = createSlice({
     }
 })
 
-export const { removeSkeletonAt, addSkeleton, removeSkeleton, moveSkeleton } = skeletons.actions;
+export const { setSkeletonForRemoval, clearExpiredSkeletons, removeSkeletonAt, addSkeleton, removeSkeleton, moveSkeleton } = skeletons.actions;
 
 const spells = createSlice({
     name: 'spells',

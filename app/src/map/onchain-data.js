@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react"
-import useMapData from "./data"
 import { BigNumber, ethers, providers } from 'ethers';
 import { convertMatrixToBytes, deployMap, fetchMap, useWallet } from "../wallet"
 import { useSelector, useDispatch } from 'react-redux';
 import * as cellFuncs from "./cell-funcs"
 import useAssets from "../assets";
 import * as $wallet from "../wallet"
-import { MAP_SIZE, addPlayer, addSkeleton, addSpell, clearExpiredSpells, clearSteps, movePlayer, moveSkeleton, removePlayer, removeSkeleton, setObstaclesFromBytes, setSteps } from "../store";
+import { MAP_SIZE, addPlayer, addSkeleton, addSpell, clearExpiredSkeletons, clearExpiredSpells, clearSteps, movePlayer, moveSkeleton, removePlayer, removeSkeleton, setObstaclesFromBytes, setSkeletonForRemoval, setSteps } from "../store";
 import useInterval from "../react-interval";
 
 window.$wallet = $wallet
@@ -24,7 +23,6 @@ function toNumber(obj) {
 export function useOnchainData({ autoload }) {
     const dispatch = useDispatch()
 
-    const data = useMapData()
     const N = MAP_SIZE
     const { findAssetById } = useAssets()
 
@@ -119,6 +117,7 @@ export function useOnchainData({ autoload }) {
 
     useInterval(() => {
         dispatch(clearExpiredSpells())
+        dispatch(clearExpiredSkeletons())
     }, 1000)
 
     useEffect(() => {
@@ -165,7 +164,7 @@ export function useOnchainData({ autoload }) {
 
         async function handleSkeletonRemoved(id, p) {
             console.log("SkeletonRemoved", ...arguments)
-            dispatch(removeSkeleton({ id }))
+            dispatch(setSkeletonForRemoval({ id }))
         }
 
         async function handleSkeletonAdded(id, p) {
@@ -240,7 +239,6 @@ export function useOnchainData({ autoload }) {
 
     return {
         N,
-        data,
         contract,
         account,
         deployContract,

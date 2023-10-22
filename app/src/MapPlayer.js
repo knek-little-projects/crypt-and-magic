@@ -7,12 +7,15 @@ import { packSteps } from "./wallet"
 import { useDispatch, useSelector } from "react-redux"
 import { useObstacles } from "./obstacles"
 import { MAP_SIZE, setSteps } from "./store"
+import render from "./map/render"
+import { useChars } from "./chars"
 
 export default function MapPlayer() {
     const dispatch = useDispatch()
     const players = useSelector(state => state.players)
     const skeletons = useSelector(state => state.skeletons)
     const steps = useSelector(state => state.steps)
+    const { findCharAt } = useChars()
 
     const [moves, setMoves] = useState([])
     const { data, contract, account } = useOnchainData({ autoload: true })
@@ -54,10 +57,7 @@ export default function MapPlayer() {
             return
         }
 
-        let char = skeletons.find(skel => cellFuncs.eq(skel.cell, cell))
-        if (!char) {
-            char = players.find(p => cellFuncs.eq(p.cell, cell))
-        }
+        const char = findCharAt(cell)
 
         if (char) {
             async function f() {
@@ -131,7 +131,7 @@ export default function MapPlayer() {
                         hoverImageUrl={hoverImageUrl}
                         hoverSize={hoverSize}
                         mapSize={MAP_SIZE}
-                        getItems={data.getItems}
+                        getItems={render}
                         onClick={onClick}
                     />
                 </>

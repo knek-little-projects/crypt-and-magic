@@ -2,15 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import useAssets from './assets'
 
 import "./App.scss"
-import useMapData from './map/data';
 import Map from "./Map"
 import { BACKGROUND, CHARACTERS } from './map/layer-types';
-import * as cellFuncs from "./map/cell-funcs"
-import uuidv4 from "./uuid"
 import { useOnchainData } from './map/onchain-data';
 import { MAP_SIZE, removePlayerAt, removeSkeletonAt, setObstacle, unsetObstacle } from './store';
 import { useDispatch, useSelector } from 'react-redux';
 import { useObstacles } from './obstacles';
+import render from './map/render';
 
 function MapEditorBrushButton({ src, onClick, children }) {
     return (
@@ -70,41 +68,6 @@ export default function MapEditor() {
             cells.forEach(cell => removeEverythingAt(cell))
             return
         }
-
-        // if (asset.type === CHARACTERS) {
-        //     if (hasObstacle(center)) {
-        //         console.warn("has obstacle")
-        //         return
-        //     }
-        // }
-
-        // if (asset.id === "wizard") {
-        //     let player = {
-        //         id: "wizard",
-        //         cell: center,
-        //         damage: 0,
-        //         asset,
-        //     }
-
-        //     const oldPlayer = data.map.getChars().find(char => char.asset.id === asset.id)
-        //     if (oldPlayer) {
-        //         player = { ...oldPlayer, cell: center }
-        //     }
-        //     data.map.replaceChar(player)
-        //     data.commit()
-        //     return
-        // }
-
-        // if (asset.type === CHARACTERS) {
-        //     const skeleton = {
-        //         id: uuidv4(),
-        //         asset,
-        //         damage: 0,
-        //         cell: center,
-        //     }
-        //     data.map.addChar(skeleton)
-        //     return
-        // }
 
         if (asset.type === BACKGROUND) {
             if (asset.id === "grass") {
@@ -198,8 +161,8 @@ export default function MapEditor() {
             </div>
             <hr />
             <Map
-                getItems={data.getItems}
-                mapSize={data.mapSize}
+                getItems={render}
+                mapSize={MAP_SIZE}
                 onBrush={onBrush}
                 onHover={onHover}
                 hoverSize={brush.size}
